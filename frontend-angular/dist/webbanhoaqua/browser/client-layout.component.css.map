@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["client-layout.component.ts"],
+  "sourcesContent": ["\n    .client-layout {\n      display: flex;\n      flex-direction: column;\n      min-height: 100vh;\n    }\n    .main-content {\n      flex: 1;\n    }\n  "],
+  "mappings": ";AACI,CAAA;AACE,WAAA;AACA,kBAAA;AACA,cAAA;;AAEF,CAAA;AACE,QAAA;;",
+  "names": []
+}
