@@ -4,6 +4,22 @@ import { generateOrderNumber, paginate, calculateShippingFee } from '../utils/he
 const prisma = new PrismaClient();
 
 export class OrderService {
+  private assertStatusTransition(current: OrderStatus, next: OrderStatus) {
+    if (current === next) return;
+
+    const allowedTransitions: Record<OrderStatus, OrderStatus[]> = {
+      [OrderStatus.PENDING]: [OrderStatus.CONFIRMED, OrderStatus.CANCELLED],
+      [OrderStatus.CONFIRMED]: [OrderStatus.SHIPPING, OrderStatus.CANCELLED],
+      [OrderStatus.SHIPPING]: [OrderStatus.COMPLETED, OrderStatus.CANCELLED],
+      [OrderStatus.COMPLETED]: [],
+      [OrderStatus.CANCELLED]: [],
+    };
+
+    if (!allowedTransitions[current].includes(next)) {
+      throw { status: 400, message: `Không thể chuyển từ ${current} sang ${next}` };
+    }
+  }
+
   async create(userId: string, data: {
     shippingName: string;
     shippingPhone: string;
@@ -23,6 +39,9 @@ export class OrderService {
 
       if (!product) {
         throw { status: 404, message: `Không tìm thấy sản phẩm: ${item.productId}` };
+      }
+      if (!product.isActive) {
+        throw { status: 400, message: `Sản phẩm "${product.name}" hiện không còn kinh doanh` };
       }
       if (product.stock < item.quantity) {
         throw { status: 400, message: `Sản phẩm "${product.name}" chỉ còn ${product.stock} trong kho` };
@@ -196,9 +215,9 @@ export class OrderService {
 
     if (params.search) {
       where.OR = [
-        { orderNumber: { contains: params.search, mode: 'insensitive' } },
-        { shippingName: { contains: params.search, mode: 'insensitive' } },
-        { shippingPhone: { contains: params.search, mode: 'insensitive' } },
+        { orderNumber: { contains: params.search } },
+        { shippingName: { contains: params.search } },
+        { shippingPhone: { contains: params.search } },
       ];
     }
 
@@ -255,6 +274,11 @@ export class OrderService {
     if (!order) {
       throw { status: 404, message: 'Không tìm thấy đơn hàng' };
     }
+    this.assertStatusTransition(order.status, status);
+
+    if (order.status === status) {
+      return order;
+    }
 
     const updateData: any = {};
 
@@ -277,7 +301,28 @@ export class OrderService {
 
     updateData.status = status;
 
-    // If cancelling, restore stock
+    if (status === OrderStatus.COMPLETED) {
+      return prisma.$transaction(async (tx) => {
+        const items = await tx.orderItem.findMany({ where: { orderId } });
+        for (const item of items) {
+          await tx.product.update({
+            where: { id: item.productId },
+            data: { soldCount: { increment: item.quantity } },
+          });
+        }
+
+        await tx.payment.updateMany({
+          where: { orderId },
+          data: { status: PaymentStatus.PAID, paidAt: new Date() },
+        });
+
+        return tx.order.update({
+          where: { id: orderId },
+          data: updateData,
+        });
+      });
+    }
+
     if (status === OrderStatus.CANCELLED) {
       await prisma.$transaction(async (tx) => {
         const items = await tx.orderItem.findMany({ where: { orderId } });

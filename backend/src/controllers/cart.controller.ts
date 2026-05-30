@@ -32,8 +32,9 @@ export class CartController {
 
   async updateItem(req: AuthRequest, res: Response) {
     try {
+      const sessionId = req.headers['x-session-id'] as string | undefined;
       const { quantity } = req.body;
-      await cartService.updateItem(req.params.id, quantity);
+      await cartService.updateItem(req.params.id, quantity, req.user?.id || null, sessionId || null);
       res.json({ success: true, message: 'Cập nhật giỏ hàng thành công' });
     } catch (error: any) {
       res.status(error.status || 500).json({ success: false, message: error.message });
@@ -42,7 +43,8 @@ export class CartController {
 
   async removeItem(req: AuthRequest, res: Response) {
     try {
-      await cartService.removeItem(req.params.id);
+      const sessionId = req.headers['x-session-id'] as string | undefined;
+      await cartService.removeItem(req.params.id, req.user?.id || null, sessionId || null);
       res.json({ success: true, message: 'Xóa sản phẩm khỏi giỏ hàng thành công' });
     } catch (error: any) {
       res.status(error.status || 500).json({ success: false, message: error.message });
@@ -51,10 +53,11 @@ export class CartController {
 
   async clearCart(req: AuthRequest, res: Response) {
     try {
-      await cartService.clearCart(req.user!.id);
+      const sessionId = req.headers['x-session-id'] as string | undefined;
+      await cartService.clearCart(req.user?.id || null, sessionId || null);
       res.json({ success: true, message: 'Xóa giỏ hàng thành công' });
     } catch (error: any) {
-      res.status(500).json({ success: false, message: error.message });
+      res.status(error.status || 500).json({ success: false, message: error.message });
     }
   }
 

@@ -3,9 +3,24 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 export class CartService {
+  private canAccessCart(
+    cart: { userId: string | null; sessionId: string | null },
+    userId?: string | null,
+    sessionId?: string | null
+  ): boolean {
+    return Boolean(
+      (userId && cart.userId === userId) ||
+      (sessionId && cart.sessionId === sessionId)
+    );
+  }
+
   async getCart(userId: string | null | undefined, sessionId?: string | null) {
     let resolvedSessionId: string | undefined = undefined;
     if (sessionId) resolvedSessionId = sessionId;
+
+    if (!userId && !resolvedSessionId) {
+      return { cart: null, items: [], subtotal: 0, itemCount: 0 };
+    }
 
     const where = userId ? { userId } : { sessionId: resolvedSessionId };
     const cart = await prisma.cart.findFirst({
@@ -43,6 +58,10 @@ export class CartService {
 
   async addItem(userId: string | null | undefined, sessionId: string | null | undefined, productId: string, quantity: number) {
     let cart: any = null;
+
+    if (!userId && !sessionId) {
+      throw { status: 400, message: 'Thiếu session ID' };
+    }
 
     if (userId) {
       cart = await prisma.cart.findFirst({ where: { userId } });
@@ -87,13 +106,13 @@ export class CartService {
     return this.getCart(userId || null, sessionId || null);
   }
 
-  async updateItem(cartItemId: string, quantity: number) {
+  async updateItem(cartItemId: string, quantity: number, userId?: string | null, sessionId?: string | null) {
     const item = await prisma.cartItem.findUnique({
       where: { id: cartItemId },
-      include: { product: true },
+      include: { product: true, cart: true },
     });
 
-    if (!item) {
+    if (!item || !this.canAccessCart(item.cart, userId, sessionId)) {
       throw { status: 404, message: 'Không tìm thấy sản phẩm trong giỏ hàng' };
     }
 
@@ -113,9 +132,12 @@ export class CartService {
     return { message: 'Cập nhật giỏ hàng thành công' };
   }
 
-  async removeItem(cartItemId: string) {
-    const item = await prisma.cartItem.findUnique({ where: { id: cartItemId } });
-    if (!item) {
+  async removeItem(cartItemId: string, userId?: string | null, sessionId?: string | null) {
+    const item = await prisma.cartItem.findUnique({
+      where: { id: cartItemId },
+      include: { cart: true },
+    });
+    if (!item || !this.canAccessCart(item.cart, userId, sessionId)) {
       throw { status: 404, message: 'Không tìm thấy sản phẩm trong giỏ hàng' };
     }
 
@@ -123,8 +145,14 @@ export class CartService {
     return { message: 'Xóa sản phẩm khỏi giỏ hàng thành công' };
   }
 
-  async clearCart(userId: string) {
-    const cart = await prisma.cart.findFirst({ where: { userId } });
+  async clearCart(userId?: string | null, sessionId?: string | null) {
+    if (!userId && !sessionId) {
+      throw { status: 400, message: 'Thiếu thông tin giỏ hàng' };
+    }
+
+    const cart = userId
+      ? await prisma.cart.findFirst({ where: { userId } })
+      : await prisma.cart.findFirst({ where: { sessionId: sessionId || undefined } });
     if (cart) {
       await prisma.cartItem.deleteMany({ where: { cartId: cart.id } });
     }

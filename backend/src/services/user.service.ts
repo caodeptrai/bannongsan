@@ -12,9 +12,9 @@ export class UserService {
     const where: any = {};
     if (params.search) {
       where.OR = [
-        { email: { contains: params.search, mode: 'insensitive' } },
-        { fullName: { contains: params.search, mode: 'insensitive' } },
-        { phone: { contains: params.search, mode: 'insensitive' } },
+        { email: { contains: params.search } },
+        { fullName: { contains: params.search } },
+        { phone: { contains: params.search } },
       ];
     }
     if (params.role) where.role = params.role;

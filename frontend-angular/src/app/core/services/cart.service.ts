@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { CartResponse, CartItem } from '../models';
 import { AuthService } from './auth.service';
@@ -33,22 +34,24 @@ export class CartService {
     return sessionId;
   }
 
-  private getHeaders(): HttpHeaders {
+  private getHeaders(forceSession = false): HttpHeaders {
     const headers: any = {};
-    if (!this.authService.isLoggedIn) {
+    if (forceSession || !this.authService.isLoggedIn) {
       headers['X-Session-Id'] = this.getSessionId();
     }
     return new HttpHeaders(headers);
   }
 
+  private syncCartState(res: CartResponse): void {
+    if (res.success && res.data.items) {
+      this.cartItemsSubject.next(res.data.items);
+      this.itemCountSubject.next(res.data.itemCount);
+    }
+  }
+
   loadCart(): void {
     this.getCart().subscribe({
-      next: (res) => {
-        if (res.success && res.data.items) {
-          this.cartItemsSubject.next(res.data.items);
-          this.itemCountSubject.next(res.data.itemCount);
-        }
-      },
+      next: (res) => this.syncCartState(res),
       error: () => {
         this.cartItemsSubject.next([]);
         this.itemCountSubject.next(0);
@@ -65,30 +68,40 @@ export class CartService {
       `${API_URL}/cart/items`,
       { productId, quantity },
       { headers: this.getHeaders() }
-    );
+    ).pipe(tap(res => this.syncCartState(res)));
   }
 
   updateCartItem(itemId: string, quantity: number): Observable<{ success: boolean; message: string }> {
     return this.http.put<{ success: boolean; message: string }>(
       `${API_URL}/cart/items/${itemId}`,
-      { quantity }
+      { quantity },
+      { headers: this.getHeaders() }
     );
   }
 
   removeFromCart(itemId: string): Observable<{ success: boolean; message: string }> {
-    return this.http.delete<{ success: boolean; message: string }>(`${API_URL}/cart/items/${itemId}`);
+    return this.http.delete<{ success: boolean; message: string }>(
+      `${API_URL}/cart/items/${itemId}`,
+      { headers: this.getHeaders() }
+    );
   }
 
   clearCart(): Observable<{ success: boolean; message: string }> {
-    return this.http.delete<{ success: boolean; message: string }>(`${API_URL}/cart/clear`);
+    return this.http.delete<{ success: boolean; message: string }>(
+      `${API_URL}/cart/clear`,
+      { headers: this.getHeaders() }
+    );
   }
 
   mergeCart(): Observable<CartResponse> {
     return this.http.post<CartResponse>(
       `${API_URL}/cart/merge`,
       {},
-      { headers: this.getHeaders() }
-    );
+      { headers: this.getHeaders(true) }
+    ).pipe(tap(res => {
+      this.syncCartState(res);
+      localStorage.removeItem('sessionId');
+    }));
   }
 
   getCurrentCart(): CartItem[] {

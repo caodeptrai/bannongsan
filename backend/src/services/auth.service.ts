@@ -49,6 +49,9 @@ export class AuthService {
     if (user.status === UserStatus.LOCKED) {
       throw { status: 403, message: 'Tài khoản đã bị khóa' };
     }
+    if (user.status === UserStatus.INACTIVE) {
+      throw { status: 403, message: 'Tài khoản đã bị vô hiệu hóa' };
+    }
 
     const token = generateToken({ id: user.id, email: user.email, role: user.role });
     return {

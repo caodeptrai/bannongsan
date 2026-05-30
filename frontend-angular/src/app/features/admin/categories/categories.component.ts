@@ -124,13 +124,14 @@ export class CategoriesComponent implements OnInit {
   }
 
   saveCategory(): void {
+    const data = this.buildPayload();
     if (this.editingCategory) {
-      this.categoryService.updateCategory(this.editingCategory.id, this.formData).subscribe({
+      this.categoryService.updateCategory(this.editingCategory.id, data).subscribe({
         next: () => { this.loadCategories(); this.closeModal(); alert('Cập nhật thành công!'); },
         error: (err) => alert(err.error?.message || 'Lỗi!')
       });
     } else {
-      this.categoryService.createCategory(this.formData).subscribe({
+      this.categoryService.createCategory(data).subscribe({
         next: () => { this.loadCategories(); this.closeModal(); alert('Thêm thành công!'); },
         error: (err) => alert(err.error?.message || 'Lỗi!')
       });
@@ -144,5 +145,16 @@ export class CategoriesComponent implements OnInit {
         error: (err) => alert(err.error?.message || 'Lỗi!')
       });
     }
+  }
+
+  private buildPayload(): Partial<Category> {
+    return {
+      name: this.formData.name,
+      slug: this.formData.slug?.trim() || undefined,
+      description: this.formData.description || undefined,
+      image: this.formData.image || undefined,
+      sortOrder: Number(this.formData.sortOrder) || 0,
+      isActive: Boolean(this.formData.isActive)
+    };
   }
 }

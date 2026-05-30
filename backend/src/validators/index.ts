@@ -21,18 +21,18 @@ export const updateProfileValidation = [
 export const productValidation = [
   body('name').trim().notEmpty().withMessage('Tên sản phẩm không được để trống'),
   body('price').isFloat({ min: 0 }).withMessage('Giá phải là số dương'),
-  body('categoryId').isUUID().withMessage('ID danh mục không hợp lệ'),
+  body('categoryId').trim().notEmpty().withMessage('ID danh mục không hợp lệ'),
   body('stock').optional().isInt({ min: 0 }).withMessage('Số lượng tồn kho phải là số nguyên dương'),
   body('unit').optional().trim().notEmpty().withMessage('Đơn vị không được để trống'),
 ];
 
 export const categoryValidation = [
   body('name').trim().notEmpty().withMessage('Tên danh mục không được để trống'),
-  body('slug').optional().trim().matches(/^[a-z0-9-]+$/).withMessage('Slug chỉ chứa chữ thường, số và dấu gạch ngang'),
+  body('slug').optional({ values: 'falsy' }).trim().matches(/^[a-z0-9-]+$/).withMessage('Slug chỉ chứa chữ thường, số và dấu gạch ngang'),
 ];
 
 export const cartItemValidation = [
-  body('productId').isUUID().withMessage('ID sản phẩm không hợp lệ'),
+  body('productId').trim().notEmpty().withMessage('ID sản phẩm không hợp lệ'),
   body('quantity').isInt({ min: 1 }).withMessage('Số lượng phải lớn hơn 0'),
 ];
 
@@ -41,6 +41,9 @@ export const orderValidation = [
   body('shippingPhone').matches(/^[0-9]{10,11}$/).withMessage('Số điều thoại không hợp lệ'),
   body('shippingAddress').trim().notEmpty().withMessage('Địa chỉ giao hàng không được để trống'),
   body('paymentMethod').optional().isIn(['COD', 'BANK_TRANSFER', 'MOMO', 'ZALOPAY']).withMessage('Phương thức thanh toán không hợp lệ'),
+  body('items').isArray({ min: 1 }).withMessage('Đơn hàng phải có ít nhất một sản phẩm'),
+  body('items.*.productId').trim().notEmpty().withMessage('ID sản phẩm không hợp lệ'),
+  body('items.*.quantity').isInt({ min: 1 }).withMessage('Số lượng phải lớn hơn 0'),
 ];
 
 export const orderStatusValidation = [
@@ -56,7 +59,7 @@ export const productQueryValidation = [
 ];
 
 export const idParamValidation = [
-  param('id').isUUID().withMessage('ID không hợp lệ'),
+  param('id').trim().notEmpty().withMessage('ID không hợp lệ'),
 ];
 
 export const chatbotValidation = [

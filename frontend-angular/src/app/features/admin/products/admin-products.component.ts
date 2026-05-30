@@ -164,7 +164,10 @@ export class AdminProductsComponent implements OnInit {
 
   saveProduct(): void {
     const data: any = { ...this.formData };
-    if (data.imageUrl) data.images = [data.imageUrl];
+    const imageUrl = data.imageUrl?.trim();
+    delete data.imageUrl;
+    if (imageUrl) data.images = [imageUrl];
+    if (data.originalPrice === '') data.originalPrice = null;
     if (this.editingProduct) {
       this.productService.updateProduct(this.editingProduct.id, data).subscribe({ next: () => { this.loadProducts(); this.closeModal(); alert('Cập nhật thành công!'); }, error: (err) => alert(err.error?.message || 'Lỗi!') });
     } else {

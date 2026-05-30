@@ -120,8 +120,8 @@ export class ChatbotService {
     if (params.category) where.category = params.category;
     if (params.search) {
       where.OR = [
-        { question: { contains: params.search, mode: 'insensitive' } },
-        { answer: { contains: params.search, mode: 'insensitive' } },
+        { question: { contains: params.search } },
+        { answer: { contains: params.search } },
       ];
     }
 

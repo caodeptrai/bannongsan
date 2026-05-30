@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { AuthService } from '../../core/services';
+import { AuthService, CartService } from '../../core/services';
 
 @Component({
   selector: 'app-login',
@@ -157,6 +157,7 @@ export class LoginComponent {
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
+    private cartService: CartService,
     private router: Router,
     private route: ActivatedRoute
   ) {
@@ -175,8 +176,11 @@ export class LoginComponent {
     this.authService.login(this.loginForm.value).subscribe({
       next: (res) => {
         if (res.success) {
-          const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/';
-          this.router.navigateByUrl(returnUrl);
+          this.cartService.mergeCart().subscribe({
+            next: () => this.finishLogin(),
+            error: () => this.finishLogin()
+          });
+          return;
         }
         this.loading = false;
       },
@@ -192,5 +196,11 @@ export class LoginComponent {
       email,
       password: '123456'
     });
+  }
+
+  private finishLogin(): void {
+    const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/';
+    this.loading = false;
+    this.router.navigateByUrl(returnUrl);
   }
 }

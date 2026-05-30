@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { AuthService } from '../../core/services';
+import { AuthService, CartService } from '../../core/services';
 
 @Component({
   selector: 'app-register',
@@ -144,6 +144,7 @@ export class RegisterComponent {
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
+    private cartService: CartService,
     private router: Router
   ) {
     this.registerForm = this.fb.group({
@@ -176,9 +177,11 @@ export class RegisterComponent {
       next: (res) => {
         if (res.success) {
           this.successMessage = 'Đăng ký thành công! Đang chuyển hướng...';
-          setTimeout(() => {
-            this.router.navigate(['/']);
-          }, 1500);
+          this.cartService.mergeCart().subscribe({
+            next: () => this.finishRegister(),
+            error: () => this.finishRegister()
+          });
+          return;
         }
         this.loading = false;
       },
@@ -187,5 +190,12 @@ export class RegisterComponent {
         this.errorMessage = err.error?.message || 'Đăng ký thất bại!';
       }
     });
+  }
+
+  private finishRegister(): void {
+    this.loading = false;
+    setTimeout(() => {
+      this.router.navigate(['/']);
+    }, 1500);
   }
 }

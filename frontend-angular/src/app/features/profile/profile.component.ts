@@ -242,6 +242,19 @@ export class ProfileComponent implements OnInit {
       alert('Mật khẩu xác nhận không khớp!');
       return;
     }
-    alert('Chức năng đổi mật khẩu sẽ được cập nhật sau!');
+
+    this.loading = true;
+    const { oldPassword, newPassword } = this.passwordForm.value;
+    this.authService.changePassword({ oldPassword, newPassword }).subscribe({
+      next: () => {
+        this.loading = false;
+        this.passwordForm.reset();
+        alert('Đổi mật khẩu thành công!');
+      },
+      error: (err) => {
+        this.loading = false;
+        alert(err.error?.message || 'Đổi mật khẩu thất bại!');
+      }
+    });
   }
 }

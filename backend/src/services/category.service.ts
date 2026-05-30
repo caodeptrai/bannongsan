@@ -43,7 +43,7 @@ export class CategoryService {
     return category;
   }
 
-  async create(data: { name: string; slug?: string | null; description?: string; image?: string; parentId?: string; sortOrder?: number }) {
+  async create(data: { name: string; slug?: string | null; description?: string; image?: string; parentId?: string; sortOrder?: number; isActive?: boolean }) {
     const slugToUse = data.slug || slugify(data.name);
     const existing = await prisma.category.findUnique({ where: { slug: slugToUse } });
     if (existing) {
@@ -56,16 +56,32 @@ export class CategoryService {
         slug: slugToUse,
         description: data.description,
         image: data.image,
-        parentId: data.parentId,
+        parentId: data.parentId || null,
         sortOrder: data.sortOrder || 0,
+        isActive: data.isActive !== undefined ? data.isActive : true,
       },
     });
   }
 
   async update(id: string, data: { name?: string; slug?: string; description?: string; image?: string; parentId?: string; sortOrder?: number; isActive?: boolean }) {
-    if (data.slug) {
+    const updateData: any = {};
+    const allowedFields = ['name', 'slug', 'description', 'image', 'parentId', 'sortOrder', 'isActive'];
+    for (const field of allowedFields) {
+      if ((data as any)[field] !== undefined) {
+        updateData[field] = (data as any)[field];
+      }
+    }
+
+    if (!updateData.slug && updateData.name) {
+      updateData.slug = slugify(updateData.name);
+    }
+    if (updateData.parentId === '') {
+      updateData.parentId = null;
+    }
+
+    if (updateData.slug) {
       const existing = await prisma.category.findFirst({
-        where: { slug: data.slug, NOT: { id } },
+        where: { slug: updateData.slug, NOT: { id } },
       });
       if (existing) {
         throw { status: 400, message: 'Slug đã tồn tại' };
@@ -74,7 +90,7 @@ export class CategoryService {
 
     return prisma.category.update({
       where: { id },
-      data,
+      data: updateData,
     });
   }
 

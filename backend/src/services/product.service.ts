@@ -26,8 +26,8 @@ export class ProductService {
 
     if (params.search) {
       where.OR = [
-        { name: { contains: params.search, mode: 'insensitive' } },
-        { description: { contains: params.search, mode: 'insensitive' } },
+        { name: { contains: params.search } },
+        { description: { contains: params.search } },
       ];
     }
 
@@ -116,6 +116,11 @@ export class ProductService {
   }
 
   async getById(id: string) {
+    const exists = await prisma.product.findUnique({ where: { id }, select: { id: true } });
+    if (!exists) {
+      throw { status: 404, message: 'Không tìm thấy sản phẩm' };
+    }
+
     const product = await prisma.product.update({
       where: { id },
       data: { viewCount: { increment: 1 } },
@@ -131,14 +136,15 @@ export class ProductService {
       },
     });
 
-    if (!product) {
-      throw { status: 404, message: 'Không tìm thấy sản phẩm' };
-    }
-
     return product;
   }
 
   async getBySlug(slug: string) {
+    const exists = await prisma.product.findUnique({ where: { slug }, select: { slug: true } });
+    if (!exists) {
+      throw { status: 404, message: 'Không tìm thấy sản phẩm' };
+    }
+
     const product = await prisma.product.update({
       where: { slug },
       data: { viewCount: { increment: 1 } },
@@ -153,10 +159,6 @@ export class ProductService {
         _count: { select: { reviews: true } },
       },
     });
-
-    if (!product) {
-      throw { status: 404, message: 'Không tìm thấy sản phẩm' };
-    }
 
     return product;
   }
@@ -184,8 +186,8 @@ export class ProductService {
     const where: any = {};
     if (params.search) {
       where.OR = [
-        { name: { contains: params.search, mode: 'insensitive' } },
-        { sku: { contains: params.search, mode: 'insensitive' } },
+        { name: { contains: params.search } },
+        { sku: { contains: params.search } },
       ];
     }
     if (params.categoryId) where.categoryId = params.categoryId;
@@ -241,7 +243,7 @@ export class ProductService {
       },
     });
 
-    if (data.images && data.images.length > 0) {
+    if (Array.isArray(data.images) && data.images.length > 0) {
       await prisma.productImage.createMany({
         data: data.images.map((url: string, index: number) => ({
           productId: product.id,
@@ -261,7 +263,26 @@ export class ProductService {
       throw { status: 404, message: 'Không tìm thấy sản phẩm' };
     }
 
-    const updateData: any = { ...data };
+    const updateData: any = {};
+    const allowedFields = [
+      'name',
+      'slug',
+      'description',
+      'price',
+      'originalPrice',
+      'unit',
+      'stock',
+      'sku',
+      'categoryId',
+      'isFeatured',
+      'isActive',
+    ];
+    for (const field of allowedFields) {
+      if (data[field] !== undefined) {
+        updateData[field] = data[field];
+      }
+    }
+
     if (data.name && !data.slug) {
       updateData.slug = slugify(data.name);
     }
@@ -278,7 +299,7 @@ export class ProductService {
       data: updateData,
     });
 
-    if (data.images && data.images.length > 0) {
+    if (Array.isArray(data.images) && data.images.length > 0) {
       await prisma.productImage.deleteMany({ where: { productId: id } });
       await prisma.productImage.createMany({
         data: data.images.map((url: string, index: number) => ({

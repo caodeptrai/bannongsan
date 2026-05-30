@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["app.component.ts"],
-  "sourcesContent": ["\n    .main-content {\n      flex: 1;\n      min-height: calc(100vh - 200px);\n    }\n  "],
-  "mappings": ";AACI,CAAA;AACE,QAAA;AACA,cAAA,KAAA,MAAA,EAAA;;",
-  "names": []
-}
