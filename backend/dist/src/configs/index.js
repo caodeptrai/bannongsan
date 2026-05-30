@@ -20,5 +20,12 @@ exports.config = {
         dir: process.env.UPLOAD_DIR || 'uploads',
         maxSize: 5 * 1024 * 1024, // 5MB
     },
+    openRouter: {
+        apiKey: process.env.OPENROUTER_API_KEY || '',
+        baseUrl: process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1',
+        model: process.env.OPENROUTER_MODEL || 'openai/gpt-4o-mini',
+        siteUrl: process.env.OPENROUTER_SITE_URL || 'http://localhost:4200',
+        appName: process.env.OPENROUTER_APP_NAME || 'WebBanHoaQua',
+    },
 };
 //# sourceMappingURL=index.js.map

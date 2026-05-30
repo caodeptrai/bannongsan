@@ -153,6 +153,21 @@ Nếu MySQL có password, chỉnh sửa file `backend/.env`:
 DATABASE_URL="mysql://root:YOUR_PASSWORD@localhost:3306/webbanhoaqua"
 ```
 
+### 5.5 Cấu hình OpenRouter cho chatbot
+
+Chatbot gọi OpenRouter Chat Completions và dùng dữ liệu đang có trên website
+(danh mục, sản phẩm đang bán, FAQ và chính sách cửa hàng) làm ngữ cảnh trả lời.
+
+Thêm các biến sau vào `backend/.env`:
+
+```env
+OPENROUTER_API_KEY=your_openrouter_api_key
+OPENROUTER_MODEL=openai/gpt-4o-mini
+OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
+OPENROUTER_SITE_URL=http://localhost:4200
+OPENROUTER_APP_NAME=WebBanHoaQua
+```
+
 ## 6. Tài khoản Demo
 
 ### Admin Account
