@@ -17,12 +17,14 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Charset for Vietnamese support
 app.use((req, res, next) => {
-  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  if (req.path.startsWith('/api')) {
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  }
   next();
 });
 
 // Static files for uploads
-app.use('/uploads', express.static(path.join(__dirname, '..', config.upload.dir)));
+app.use('/uploads', express.static(path.resolve(process.cwd(), config.upload.dir)));
 
 // API Routes
 app.use('/api', routes);

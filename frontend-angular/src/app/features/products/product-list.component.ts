@@ -199,12 +199,21 @@ import { Product, Category, ProductQueryParams } from '../../core/models';
     }
 
     .price-range {
-      display: flex;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
       align-items: center;
-      gap: 12px;
+      gap: 10px;
+      width: 100%;
+
+      span {
+        color: var(--text-secondary);
+        font-weight: 600;
+        text-align: center;
+      }
 
       input {
-        flex: 1;
+        min-width: 0;
+        width: 100%;
         padding: 10px;
         border: 1px solid var(--border-color);
         border-radius: 6px;
@@ -213,6 +222,14 @@ import { Product, Category, ProductQueryParams } from '../../core/models';
         &:focus {
           outline: none;
           border-color: var(--primary-color);
+        }
+      }
+
+      @media (max-width: 420px) {
+        grid-template-columns: 1fr;
+
+        span {
+          display: none;
         }
       }
     }
@@ -383,6 +400,10 @@ export class ProductListComponent implements OnInit {
       this.searchQuery = params['search'] || '';
       this.selectedCategoryId = params['categoryId'] || '';
       this.currentPage = parseInt(params['page']) || 1;
+      this.minPrice = params['minPrice'] ? Number(params['minPrice']) : null;
+      this.maxPrice = params['maxPrice'] ? Number(params['maxPrice']) : null;
+      this.inStockOnly = params['inStock'] === 'true';
+      this.sortBy = params['sortBy'] || '';
       this.loadProducts();
     });
   }
@@ -407,8 +428,8 @@ export class ProductListComponent implements OnInit {
 
     if (this.searchQuery) params.search = this.searchQuery;
     if (this.selectedCategoryId) params.categoryId = this.selectedCategoryId;
-    if (this.minPrice) params.minPrice = this.minPrice;
-    if (this.maxPrice) params.maxPrice = this.maxPrice;
+    if (this.minPrice !== null) params.minPrice = this.minPrice;
+    if (this.maxPrice !== null) params.maxPrice = this.maxPrice;
     if (this.inStockOnly) params.inStock = true;
     if (this.sortBy) {
       const [sort, order] = this.sortBy.split('-');
@@ -463,14 +484,16 @@ export class ProductListComponent implements OnInit {
     const queryParams: any = {};
     if (this.searchQuery) queryParams.search = this.searchQuery;
     if (this.selectedCategoryId) queryParams.categoryId = this.selectedCategoryId;
+    if (this.minPrice !== null) queryParams.minPrice = this.minPrice;
+    if (this.maxPrice !== null) queryParams.maxPrice = this.maxPrice;
+    if (this.inStockOnly) queryParams.inStock = true;
+    if (this.sortBy) queryParams.sortBy = this.sortBy;
     if (this.currentPage > 1) queryParams.page = this.currentPage;
 
     this.router.navigate([], {
       relativeTo: this.route,
       queryParams,
-      queryParamsHandling: 'merge'
+      queryParamsHandling: ''
     });
-
-    this.loadProducts();
   }
 }

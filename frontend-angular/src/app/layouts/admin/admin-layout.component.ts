@@ -14,7 +14,7 @@ interface AdminMenuItem {
   selector: 'app-admin-layout',
   template: `
     <div class="admin-wrapper">
-      <aside class="admin-sidebar">
+      <aside class="admin-sidebar" [class.open]="sidebarOpen">
         <div class="sidebar-header">
           <div class="logo">
             <span class="material-icons">eco</span>
@@ -53,6 +53,10 @@ interface AdminMenuItem {
               <span class="material-icons">bar_chart</span>
               <span>Thống kê</span>
             </a>
+            <a routerLink="/admin/settings" routerLinkActive="active" class="nav-item">
+              <span class="material-icons">settings</span>
+              <span>Cấu hình</span>
+            </a>
           </div>
         </nav>
 
@@ -67,6 +71,7 @@ interface AdminMenuItem {
           </button>
         </div>
       </aside>
+      <div class="sidebar-backdrop" [class.show]="sidebarOpen" (click)="toggleSidebar()"></div>
 
       <div class="admin-main">
         <header class="admin-header">
@@ -95,12 +100,13 @@ interface AdminMenuItem {
     .admin-wrapper {
       display: flex;
       min-height: 100vh;
-      background: #f5f5f5;
+      background: #eef3ef;
+      color: #182230;
     }
 
     .admin-sidebar {
-      width: 260px;
-      background: #1a1a2e;
+      width: 272px;
+      background: #111827;
       color: white;
       position: fixed;
       top: 0;
@@ -108,8 +114,9 @@ interface AdminMenuItem {
       bottom: 0;
       display: flex;
       flex-direction: column;
-      z-index: 100;
+      z-index: 120;
       transition: transform 0.3s ease;
+      box-shadow: 18px 0 40px rgba(15, 23, 42, 0.22);
 
       @media (max-width: 768px) {
         transform: translateX(-100%);
@@ -128,17 +135,18 @@ interface AdminMenuItem {
         display: flex;
         align-items: center;
         gap: 10px;
-        font-family: 'Playfair Display', serif;
+        font-family: inherit;
         font-size: 20px;
-        font-weight: 700;
+        font-weight: 800;
+        letter-spacing: 0;
 
         .material-icons {
           font-size: 32px;
-          color: #4caf50;
+          color: #86efac;
         }
 
         span span {
-          color: #4caf50;
+          color: #86efac;
         }
       }
     }
@@ -155,10 +163,11 @@ interface AdminMenuItem {
       .nav-section-title {
         display: block;
         padding: 8px 20px;
-        font-size: 11px;
+        font-size: 12px;
         text-transform: uppercase;
-        letter-spacing: 1px;
-        color: rgba(255,255,255,0.5);
+        letter-spacing: 0.04em;
+        color: rgba(255,255,255,0.48);
+        font-weight: 700;
       }
     }
 
@@ -175,6 +184,8 @@ interface AdminMenuItem {
       background: none;
       width: 100%;
       font-size: 14px;
+      font-weight: 600;
+      border-left: 3px solid transparent;
 
       .material-icons {
         font-size: 22px;
@@ -186,9 +197,9 @@ interface AdminMenuItem {
       }
 
       &.active {
-        background: rgba(76, 175, 80, 0.2);
-        color: #4caf50;
-        border-left: 3px solid #4caf50;
+        background: rgba(134, 239, 172, 0.14);
+        color: #86efac;
+        border-left-color: #86efac;
       }
     }
 
@@ -199,7 +210,7 @@ interface AdminMenuItem {
 
     .admin-main {
       flex: 1;
-      margin-left: 260px;
+      margin-left: 272px;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
@@ -211,14 +222,15 @@ interface AdminMenuItem {
 
     .admin-header {
       background: white;
-      padding: 16px 24px;
+      padding: 14px 24px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+      box-shadow: 0 1px 0 rgba(15, 23, 42, 0.08);
       position: sticky;
       top: 0;
       z-index: 50;
+      min-height: 68px;
     }
 
     .header-left {
@@ -228,26 +240,30 @@ interface AdminMenuItem {
 
       .toggle-btn {
         display: none;
-        background: none;
-        border: none;
-        padding: 4px;
+        background: #f2f4f7;
+        border: 1px solid #e4e7ec;
+        border-radius: 8px;
+        width: 40px;
+        height: 40px;
+        align-items: center;
+        justify-content: center;
         cursor: pointer;
 
         .material-icons {
-          font-size: 28px;
-          color: var(--text-color);
+          font-size: 24px;
+          color: #344054;
         }
 
         @media (max-width: 768px) {
-          display: block;
+          display: inline-flex;
         }
       }
 
       .page-title {
-        font-family: 'Roboto', sans-serif;
+        font-family: inherit;
         font-size: 20px;
-        font-weight: 600;
-        color: var(--text-color);
+        font-weight: 800;
+        color: #182230;
         margin: 0;
       }
     }
@@ -257,7 +273,11 @@ interface AdminMenuItem {
         display: flex;
         align-items: center;
         gap: 8px;
-        color: var(--text-color);
+        color: #344054;
+        padding: 8px 10px;
+        border: 1px solid #e4e7ec;
+        border-radius: 999px;
+        background: #ffffff;
 
         .material-icons {
           font-size: 28px;
@@ -271,10 +291,27 @@ interface AdminMenuItem {
 
     .admin-content {
       flex: 1;
-      padding: 24px;
+      padding: 28px;
+      width: 100%;
+      max-width: 1480px;
 
       @media (max-width: 768px) {
         padding: 16px;
+      }
+    }
+
+    .sidebar-backdrop {
+      display: none;
+
+      @media (max-width: 768px) {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.48);
+        z-index: 110;
+
+        &.show {
+          display: block;
+        }
       }
     }
   `]
@@ -309,6 +346,7 @@ export class AdminLayoutComponent implements OnInit {
       '/admin/orders': 'Quản lý Đơn hàng',
       '/admin/users': 'Quản lý Khách hàng',
       '/admin/statistics': 'Thống kê Doanh thu',
+      '/admin/settings': 'Cấu hình hệ thống',
     };
 
     for (const [route, title] of Object.entries(routeMap)) {

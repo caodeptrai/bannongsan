@@ -14,6 +14,7 @@ const routes: Routes = [
       { path: 'orders', loadChildren: () => import('../../features/admin/orders/orders.module').then(m => m.OrdersModule) },
       { path: 'users', loadChildren: () => import('../../features/admin/users/users.module').then(m => m.UsersModule) },
       { path: 'statistics', loadChildren: () => import('../../features/admin/statistics/statistics.module').then(m => m.StatisticsModule) },
+      { path: 'settings', loadChildren: () => import('../../features/admin/settings/settings.module').then(m => m.SettingsModule) },
     ]
   }
 ];

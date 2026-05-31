@@ -4,9 +4,12 @@ import { Component } from '@angular/core';
   selector: 'app-client-layout',
   template: `
     <div class="client-layout">
+      <app-header></app-header>
       <main class="main-content">
         <router-outlet></router-outlet>
       </main>
+      <app-footer></app-footer>
+      <app-chatbot></app-chatbot>
     </div>
   `,
   styles: [`

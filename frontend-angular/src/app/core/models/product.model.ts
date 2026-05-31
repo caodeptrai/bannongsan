@@ -82,6 +82,7 @@ export interface ProductQueryParams {
 export interface PaginatedResponse<T> {
   success: boolean;
   products?: T[];
+  categories?: T[];
   orders?: T[];
   users?: T[];
   faqs?: T[];

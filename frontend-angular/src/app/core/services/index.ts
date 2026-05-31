@@ -4,3 +4,4 @@ export * from './category.service';
 export * from './cart.service';
 export * from './order.service';
 export * from './chatbot.service';
+export * from './setting.service';

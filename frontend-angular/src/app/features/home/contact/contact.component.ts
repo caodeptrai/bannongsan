@@ -1,4 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { SettingService } from '../../../core/services';
+import { SystemSetting } from '../../../core/models';
 
 @Component({
   selector: 'app-contact',
@@ -18,28 +20,28 @@ import { Component } from '@angular/core';
               <span class="material-icons">location_on</span>
               <div>
                 <strong>Địa chỉ</strong>
-                <p>123 Đường Nông Sản, Quận 1, TP.HCM</p>
+                <p>{{ settings?.address || '123 Đường Nông Sản, Quận 1, TP.HCM' }}</p>
               </div>
             </div>
             <div class="info-item">
               <span class="material-icons">phone</span>
               <div>
                 <strong>Điện thoại</strong>
-                <p>0909.123.456</p>
+                <p>{{ settings?.contactPhone || '0909.123.456' }}</p>
               </div>
             </div>
             <div class="info-item">
               <span class="material-icons">email</span>
               <div>
                 <strong>Email</strong>
-                <p>contact&#64;webbanhoaqua.com</p>
+                <p>{{ settings?.contactEmail || 'contact@webbanhoaqua.com' }}</p>
               </div>
             </div>
             <div class="info-item">
               <span class="material-icons">schedule</span>
               <div>
                 <strong>Giờ làm việc</strong>
-                <p>7:00 - 21:00 (Thứ 2 - CN)</p>
+                <p>{{ settings?.businessHours || '7:00 - 21:00 (Thứ 2 - CN)' }}</p>
               </div>
             </div>
           </div>
@@ -77,4 +79,18 @@ import { Component } from '@angular/core';
     .form-group { margin-bottom: 16px; label { display: block; margin-bottom: 6px; font-weight: 500; } }
   `]
 })
-export class ContactComponent {}
+export class ContactComponent implements OnInit {
+  settings: SystemSetting | null = null;
+
+  constructor(private settingService: SettingService) {}
+
+  ngOnInit(): void {
+    this.settingService.getSettings().subscribe({
+      next: (res) => {
+        if (res.success) {
+          this.settings = res.data;
+        }
+      }
+    });
+  }
+}

@@ -1,6 +1,5 @@
 import { PrismaClient } from '@prisma/client';
 import { slugify, paginate } from '../utils/helpers';
-import { Prisma } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -227,6 +226,11 @@ export class ProductService {
       throw { status: 400, message: 'Slug đã tồn tại' };
     }
 
+    const category = await prisma.category.findUnique({ where: { id: data.categoryId }, select: { id: true } });
+    if (!category) {
+      throw { status: 400, message: 'Danh mục không hợp lệ' };
+    }
+
     const product = await prisma.product.create({
       data: {
         name: data.name,
@@ -287,8 +291,15 @@ export class ProductService {
       updateData.slug = slugify(data.name);
     }
 
-    if (data.slug && data.slug !== product.slug) {
-      const existing = await prisma.product.findUnique({ where: { slug: data.slug } });
+    if (updateData.categoryId) {
+      const category = await prisma.category.findUnique({ where: { id: updateData.categoryId }, select: { id: true } });
+      if (!category) {
+        throw { status: 400, message: 'Danh mục không hợp lệ' };
+      }
+    }
+
+    if (updateData.slug && updateData.slug !== product.slug) {
+      const existing = await prisma.product.findFirst({ where: { slug: updateData.slug, NOT: { id } } });
       if (existing) {
         throw { status: 400, message: 'Slug đã tồn tại' };
       }

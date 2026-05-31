@@ -57,6 +57,7 @@ export class CartService {
   }
 
   async addItem(userId: string | null | undefined, sessionId: string | null | undefined, productId: string, quantity: number) {
+    const itemQuantity = Number(quantity);
     let cart: any = null;
 
     if (!userId && !sessionId) {
@@ -80,7 +81,10 @@ export class CartService {
     if (!product) {
       throw { status: 404, message: 'Không tìm thấy sản phẩm' };
     }
-    if (product.stock < quantity) {
+    if (!Number.isInteger(itemQuantity) || itemQuantity <= 0) {
+      throw { status: 400, message: 'Số lượng không hợp lệ' };
+    }
+    if (product.stock < itemQuantity) {
       throw { status: 400, message: 'Số lượng vượt quá tồn kho' };
     }
 
@@ -89,7 +93,7 @@ export class CartService {
     });
 
     if (existingItem) {
-      const newQuantity = existingItem.quantity + quantity;
+      const newQuantity = existingItem.quantity + itemQuantity;
       if (newQuantity > product.stock) {
         throw { status: 400, message: 'Số lượng vượt quá tồn kho' };
       }
@@ -99,7 +103,7 @@ export class CartService {
       });
     } else {
       await prisma.cartItem.create({
-        data: { cartId: cart.id, productId, quantity },
+        data: { cartId: cart.id, productId, quantity: itemQuantity },
       });
     }
 
@@ -107,6 +111,7 @@ export class CartService {
   }
 
   async updateItem(cartItemId: string, quantity: number, userId?: string | null, sessionId?: string | null) {
+    const itemQuantity = Number(quantity);
     const item = await prisma.cartItem.findUnique({
       where: { id: cartItemId },
       include: { product: true, cart: true },
@@ -116,16 +121,20 @@ export class CartService {
       throw { status: 404, message: 'Không tìm thấy sản phẩm trong giỏ hàng' };
     }
 
-    if (quantity > item.product.stock) {
+    if (!Number.isInteger(itemQuantity) || itemQuantity < 0) {
+      throw { status: 400, message: 'Số lượng không hợp lệ' };
+    }
+
+    if (itemQuantity > item.product.stock) {
       throw { status: 400, message: 'Số lượng vượt quá tồn kho' };
     }
 
-    if (quantity <= 0) {
+    if (itemQuantity <= 0) {
       await prisma.cartItem.delete({ where: { id: cartItemId } });
     } else {
       await prisma.cartItem.update({
         where: { id: cartItemId },
-        data: { quantity },
+        data: { quantity: itemQuantity },
       });
     }
 

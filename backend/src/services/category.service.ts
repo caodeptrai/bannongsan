@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { slugify } from '../utils/helpers';
+import { paginate, slugify } from '../utils/helpers';
 
 const prisma = new PrismaClient();
 
@@ -18,14 +18,43 @@ export class CategoryService {
     });
   }
 
-  async getAllAdmin() {
-    return prisma.category.findMany({
-      include: {
-        children: true,
-        _count: { select: { products: true } },
+  async getAllAdmin(params: { page?: number; limit?: number; search?: string } = {}) {
+    const page = params.page || 1;
+    const limit = params.limit || 20;
+    const { skip, take } = paginate(page, limit);
+
+    const where: any = {};
+    if (params.search) {
+      where.OR = [
+        { name: { contains: params.search } },
+        { slug: { contains: params.search } },
+        { description: { contains: params.search } },
+      ];
+    }
+
+    const [categories, total] = await Promise.all([
+      prisma.category.findMany({
+        where,
+        skip,
+        take,
+        include: {
+          children: true,
+          _count: { select: { products: true } },
+        },
+        orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
+      }),
+      prisma.category.count({ where }),
+    ]);
+
+    return {
+      categories,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
       },
-      orderBy: { sortOrder: 'asc' },
-    });
+    };
   }
 
   async getById(id: string) {

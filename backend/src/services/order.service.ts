@@ -4,7 +4,22 @@ import { generateOrderNumber, paginate, calculateShippingFee } from '../utils/he
 const prisma = new PrismaClient();
 
 export class OrderService {
+  private isOrderStatus(status: string): status is OrderStatus {
+    return Object.values(OrderStatus).includes(status as OrderStatus);
+  }
+
+  private parseDate(value: string, endOfDay = false): Date {
+    const date = new Date(endOfDay ? `${value}T23:59:59` : value);
+    if (Number.isNaN(date.getTime())) {
+      throw { status: 400, message: 'Ngày lọc không hợp lệ' };
+    }
+    return date;
+  }
+
   private assertStatusTransition(current: OrderStatus, next: OrderStatus) {
+    if (!this.isOrderStatus(next)) {
+      throw { status: 400, message: 'Trạng thái đơn hàng không hợp lệ' };
+    }
     if (current === next) return;
 
     const allowedTransitions: Record<OrderStatus, OrderStatus[]> = {
@@ -32,6 +47,11 @@ export class OrderService {
     const orderItems: any[] = [];
 
     for (const item of data.items) {
+      const quantity = Number(item.quantity);
+      if (!Number.isInteger(quantity) || quantity <= 0) {
+        throw { status: 400, message: 'Số lượng sản phẩm không hợp lệ' };
+      }
+
       const product = await prisma.product.findUnique({
         where: { id: item.productId },
         include: { images: { where: { isPrimary: true }, take: 1 } },
@@ -43,18 +63,18 @@ export class OrderService {
       if (!product.isActive) {
         throw { status: 400, message: `Sản phẩm "${product.name}" hiện không còn kinh doanh` };
       }
-      if (product.stock < item.quantity) {
+      if (product.stock < quantity) {
         throw { status: 400, message: `Sản phẩm "${product.name}" chỉ còn ${product.stock} trong kho` };
       }
 
-      const itemTotal = Number(product.price) * item.quantity;
+      const itemTotal = Number(product.price) * quantity;
       subtotal += itemTotal;
 
       orderItems.push({
         productId: product.id,
         productName: product.name,
         productImage: product.images[0]?.url || null,
-        quantity: item.quantity,
+        quantity,
         price: Number(product.price),
         total: itemTotal,
       });
@@ -210,6 +230,9 @@ export class OrderService {
     const where: any = {};
 
     if (params.status) {
+      if (!this.isOrderStatus(params.status)) {
+        throw { status: 400, message: 'Trạng thái đơn hàng không hợp lệ' };
+      }
       where.status = params.status;
     }
 
@@ -223,8 +246,8 @@ export class OrderService {
 
     if (params.startDate || params.endDate) {
       where.createdAt = {};
-      if (params.startDate) where.createdAt.gte = new Date(params.startDate);
-      if (params.endDate) where.createdAt.lte = new Date(params.endDate + 'T23:59:59');
+      if (params.startDate) where.createdAt.gte = this.parseDate(params.startDate);
+      if (params.endDate) where.createdAt.lte = this.parseDate(params.endDate, true);
     }
 
     const [orders, total] = await Promise.all([
@@ -349,8 +372,8 @@ export class OrderService {
 
   async getStatistics(startDate?: string, endDate?: string) {
     const dateFilter: any = {};
-    if (startDate) dateFilter.gte = new Date(startDate);
-    if (endDate) dateFilter.lte = new Date(endDate + 'T23:59:59');
+    if (startDate) dateFilter.gte = this.parseDate(startDate);
+    if (endDate) dateFilter.lte = this.parseDate(endDate, true);
 
     const whereCompleted: any = { status: OrderStatus.COMPLETED };
     if (Object.keys(dateFilter).length > 0) {

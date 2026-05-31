@@ -1,4 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { SettingService } from '../../../core/services';
+import { SystemSetting } from '../../../core/models';
 
 @Component({
   selector: 'app-footer',
@@ -10,7 +12,7 @@ import { Component } from '@angular/core';
             <div class="footer-col">
               <h3 class="footer-logo">
                 <span class="material-icons">eco</span>
-                WebBanHoaQua
+                {{ settings?.siteName || 'WebBanHoaQua' }}
               </h3>
               <p class="footer-desc">
                 Chuyên cung cấp các loại nông sản tươi ngon, chất lượng cao, đảm bảo nguồn gốc xuất xứ rõ ràng.
@@ -47,19 +49,19 @@ import { Component } from '@angular/core';
               <ul class="contact-info">
                 <li>
                   <span class="material-icons">location_on</span>
-                  123 Đường Nông Sản, Quận 1, TP.HCM
+                  {{ settings?.address || '123 Đường Nông Sản, Quận 1, TP.HCM' }}
                 </li>
                 <li>
                   <span class="material-icons">phone</span>
-                  0909.123.456
+                  {{ settings?.contactPhone || '0909.123.456' }}
                 </li>
                 <li>
                   <span class="material-icons">email</span>
-                  contact&#64;webbanhoaqua.com
+                  {{ settings?.contactEmail || 'contact@webbanhoaqua.com' }}
                 </li>
                 <li>
                   <span class="material-icons">schedule</span>
-                  7:00 - 21:00 (Thứ 2 - CN)
+                  {{ settings?.businessHours || '7:00 - 21:00 (Thứ 2 - CN)' }}
                 </li>
               </ul>
             </div>
@@ -69,7 +71,7 @@ import { Component } from '@angular/core';
 
       <div class="footer-bottom">
         <div class="container">
-          <p>&copy; 2026 WebBanHoaQua. Tất cả quyền được bảo lưu.</p>
+          <p>&copy; 2026 {{ settings?.siteName || 'WebBanHoaQua' }}. Tất cả quyền được bảo lưu.</p>
         </div>
       </div>
     </footer>
@@ -204,4 +206,18 @@ import { Component } from '@angular/core';
     }
   `]
 })
-export class FooterComponent {}
+export class FooterComponent implements OnInit {
+  settings: SystemSetting | null = null;
+
+  constructor(private settingService: SettingService) {}
+
+  ngOnInit(): void {
+    this.settingService.getSettings().subscribe({
+      next: (res) => {
+        if (res.success) {
+          this.settings = res.data;
+        }
+      }
+    });
+  }
+}

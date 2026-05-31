@@ -13,6 +13,14 @@ import { Category } from '../../../core/models';
         </button>
       </div>
 
+      <div class="toolbar">
+        <div class="search-box">
+          <input type="text" [(ngModel)]="searchQuery" (keyup.enter)="searchCategories()" placeholder="Tìm tên danh mục, slug...">
+          <button (click)="searchCategories()"><span class="material-icons">search</span></button>
+        </div>
+        <span class="list-count">Tổng {{ totalCategories }} danh mục</span>
+      </div>
+
       <div class="table-container">
         <table>
           <thead>
@@ -39,6 +47,16 @@ import { Category } from '../../../core/models';
             </tr>
           </tbody>
         </table>
+      </div>
+
+      <div class="pagination" *ngIf="totalPages > 1">
+        <button [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)">
+          <span class="material-icons">chevron_left</span>
+        </button>
+        <button *ngFor="let p of pages" [class.active]="p === currentPage" (click)="goToPage(p)">{{ p }}</button>
+        <button [disabled]="currentPage === totalPages" (click)="goToPage(currentPage + 1)">
+          <span class="material-icons">chevron_right</span>
+        </button>
       </div>
 
       <!-- Modal -->
@@ -85,6 +103,7 @@ import { Category } from '../../../core/models';
   `,
   styles: [`
     .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; h1 { font-size: 24px; } }
+    .list-count { color: var(--text-secondary); font-size: 14px; font-weight: 600; margin-left: auto; }
     .table-container { background: white; border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; }
     table { th, td { padding: 16px; } }
     .cat-image { width: 50px; height: 50px; object-fit: cover; border-radius: 8px; }
@@ -100,18 +119,49 @@ import { Category } from '../../../core/models';
 })
 export class CategoriesComponent implements OnInit {
   categories: Category[] = [];
+  searchQuery = '';
+  currentPage = 1;
+  totalPages = 1;
+  totalCategories = 0;
   showModal = false;
   editingCategory: Category | null = null;
   formData: any = { name: '', slug: '', description: '', image: '', sortOrder: 0, isActive: true };
+
+  get pages(): number[] {
+    const pages: number[] = [];
+    const start = Math.max(1, this.currentPage - 2);
+    const end = Math.min(this.totalPages, this.currentPage + 2);
+    for (let page = start; page <= end; page++) {
+      pages.push(page);
+    }
+    return pages;
+  }
 
   constructor(private categoryService: CategoryService) {}
 
   ngOnInit(): void { this.loadCategories(); }
 
   loadCategories(): void {
-    this.categoryService.getAllCategoriesAdmin().subscribe({
-      next: (res) => { if (res.success) this.categories = res.data; }
+    this.categoryService.getAllCategoriesAdmin({ page: this.currentPage, limit: 10, search: this.searchQuery }).subscribe({
+      next: (res) => {
+        if (res.success) {
+          this.categories = res.categories || [];
+          this.totalPages = res.pagination?.totalPages || 1;
+          this.totalCategories = res.pagination?.total || 0;
+        }
+      }
     });
+  }
+
+  searchCategories(): void {
+    this.currentPage = 1;
+    this.loadCategories();
+  }
+
+  goToPage(page: number): void {
+    if (page < 1 || page > this.totalPages || page === this.currentPage) return;
+    this.currentPage = page;
+    this.loadCategories();
   }
 
   openModal(): void { this.showModal = true; this.editingCategory = null; this.formData = { name: '', slug: '', description: '', image: '', sortOrder: 0, isActive: true }; }

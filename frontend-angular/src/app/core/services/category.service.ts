@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { ApiResponse, Category } from '../models';
+import { ApiResponse, Category, PaginatedResponse } from '../models';
 
 const API_URL = environment.apiUrl;
 
@@ -21,8 +21,17 @@ export class CategoryService {
   }
 
   // Admin methods
-  getAllCategoriesAdmin(): Observable<{ success: boolean; data: Category[] }> {
-    return this.http.get<{ success: boolean; data: Category[] }>(`${API_URL}/categories/admin/all`);
+  getAllCategoriesAdmin(params?: any): Observable<PaginatedResponse<Category>> {
+    let httpParams = new HttpParams();
+    if (params) {
+      Object.keys(params).forEach(key => {
+        const value = params[key];
+        if (value !== undefined && value !== null && value !== '') {
+          httpParams = httpParams.set(key, value.toString());
+        }
+      });
+    }
+    return this.http.get<PaginatedResponse<Category>>(`${API_URL}/categories/admin/all`, { params: httpParams });
   }
 
   createCategory(data: Partial<Category>): Observable<{ success: boolean; message: string; data: Category }> {

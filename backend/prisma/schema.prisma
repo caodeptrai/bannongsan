@@ -280,3 +280,17 @@ model ChatbotFAQ {
 
   @@map("chatbot_faqs")
 }
+
+// ===================== SYSTEM SETTING MODEL =====================
+model SystemSetting {
+  id           String   @id
+  siteName     String   @default("WebBanHoaQua")
+  contactEmail String?
+  contactPhone String?
+  address      String?  @db.Text
+  businessHours String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("system_settings")
+}

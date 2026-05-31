@@ -13,8 +13,13 @@ export class CategoryController {
 
   async getAllAdmin(req: Request, res: Response) {
     try {
-      const categories = await categoryService.getAllAdmin();
-      res.json({ success: true, data: categories });
+      const { page, limit, search } = req.query;
+      const result = await categoryService.getAllAdmin({
+        page: page ? Number(page) : undefined,
+        limit: limit ? Number(limit) : undefined,
+        search: search as string,
+      });
+      res.json({ success: true, ...result });
     } catch (error: any) {
       res.status(500).json({ success: false, message: error.message });
     }

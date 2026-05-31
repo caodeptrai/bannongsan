@@ -3,6 +3,27 @@ import { Request, Response, NextFunction } from 'express';
 export const errorHandler = (err: any, req: Request, res: Response, next: NextFunction) => {
   console.error('Error:', err);
 
+  if (err instanceof SyntaxError && 'body' in err) {
+    return res.status(400).json({
+      success: false,
+      message: 'JSON không hợp lệ',
+    });
+  }
+
+  if (err.name === 'MulterError') {
+    return res.status(400).json({
+      success: false,
+      message: err.code === 'LIMIT_FILE_SIZE' ? 'File tải lên vượt quá dung lượng cho phép' : err.message,
+    });
+  }
+
+  if (err.message?.includes('Chỉ chấp nhận file hình ảnh')) {
+    return res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+
   if (err.name === 'ValidationError') {
     return res.status(400).json({
       success: false,

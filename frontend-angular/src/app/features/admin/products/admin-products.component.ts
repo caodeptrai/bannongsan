@@ -81,7 +81,20 @@ import { Product, Category } from '../../../core/models';
               <div class="form-group"><label>Đơn vị</label><input type="text" [(ngModel)]="formData.unit" class="form-control" placeholder="kg, cái, túi..."></div>
             </div>
             <div class="form-group"><label>Mô tả</label><textarea [(ngModel)]="formData.description" class="form-control" rows="4"></textarea></div>
-            <div class="form-group"><label>Hình ảnh (URL)</label><input type="text" [(ngModel)]="formData.imageUrl" class="form-control" placeholder="https://..."></div>
+            <div class="form-group">
+              <label>Hình ảnh sản phẩm</label>
+              <div class="upload-box" [class.has-image]="imagePreview">
+                <img *ngIf="imagePreview" [src]="imagePreview" alt="Ảnh sản phẩm" class="image-preview">
+                <div class="upload-actions">
+                  <input #imageInput type="file" accept="image/jpeg,image/png,image/webp,image/gif" (change)="onImageSelected($event)" hidden>
+                  <button type="button" class="btn btn-outline" (click)="imageInput.click()">
+                    <span class="material-icons">upload</span>
+                    {{ imagePreview ? 'Đổi ảnh' : 'Chọn ảnh' }}
+                  </button>
+                  <span class="upload-hint">JPG, PNG, WEBP hoặc GIF. Tối đa 5MB.</span>
+                </div>
+              </div>
+            </div>
             <div class="form-row">
               <label class="checkbox-label"><input type="checkbox" [(ngModel)]="formData.isFeatured"> Sản phẩm nổi bật</label>
               <label class="checkbox-label"><input type="checkbox" [(ngModel)]="formData.isActive"> Hoạt động</label>
@@ -112,6 +125,12 @@ import { Product, Category } from '../../../core/models';
     .modal-footer { padding: 16px 20px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 12px; }
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; @media (max-width: 600px) { grid-template-columns: 1fr; } }
     .checkbox-label { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+    .upload-box { display: grid; grid-template-columns: 120px 1fr; gap: 16px; align-items: center; padding: 14px; border: 1px dashed #cbd5e1; border-radius: 10px; background: #f8fafc; }
+    .upload-box:not(.has-image) { grid-template-columns: 1fr; }
+    .image-preview { width: 120px; height: 120px; object-fit: cover; border-radius: 10px; border: 1px solid var(--border-color); background: white; }
+    .upload-actions { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+    .upload-hint { color: var(--text-secondary); font-size: 13px; }
+    @media (max-width: 600px) { .upload-box { grid-template-columns: 1fr; } .image-preview { width: 100%; height: 180px; } }
   `]
 })
 export class AdminProductsComponent implements OnInit {
@@ -123,7 +142,9 @@ export class AdminProductsComponent implements OnInit {
   totalPages = 1;
   showModal = false;
   editingProduct: Product | null = null;
-  formData: any = { name: '', categoryId: '', price: 0, originalPrice: null, stock: 0, unit: 'kg', description: '', imageUrl: '', isFeatured: false, isActive: true };
+  selectedImageFile: File | null = null;
+  imagePreview = '';
+  formData: any = { name: '', categoryId: '', price: 0, originalPrice: null, stock: 0, unit: 'kg', description: '', isFeatured: false, isActive: true };
 
   get pages(): number[] {
     return Array.from({ length: this.totalPages }, (_, i) => i + 1);
@@ -153,21 +174,53 @@ export class AdminProductsComponent implements OnInit {
     return 'https://via.placeholder.com/50';
   }
 
-  openModal(): void { this.showModal = true; this.editingProduct = null; this.formData = { name: '', categoryId: this.categories[0]?.id || '', price: 0, originalPrice: null, stock: 0, unit: 'kg', description: '', imageUrl: '', isFeatured: false, isActive: true }; }
-  closeModal(): void { this.showModal = false; this.editingProduct = null; }
+  openModal(): void {
+    this.showModal = true;
+    this.editingProduct = null;
+    this.selectedImageFile = null;
+    this.imagePreview = '';
+    this.formData = { name: '', categoryId: this.categories[0]?.id || '', price: 0, originalPrice: null, stock: 0, unit: 'kg', description: '', isFeatured: false, isActive: true };
+  }
+
+  closeModal(): void {
+    this.showModal = false;
+    this.editingProduct = null;
+    this.selectedImageFile = null;
+    this.imagePreview = '';
+  }
 
   editProduct(p: Product): void {
     this.editingProduct = p;
-    this.formData = { name: p.name, categoryId: p.categoryId, price: p.price, originalPrice: p.originalPrice, stock: p.stock, unit: p.unit, description: p.description, imageUrl: p.images?.[0]?.url || '', isFeatured: p.isFeatured, isActive: p.isActive };
+    this.selectedImageFile = null;
+    this.imagePreview = p.images?.[0]?.url || '';
+    this.formData = { name: p.name, categoryId: p.categoryId, price: p.price, originalPrice: p.originalPrice, stock: p.stock, unit: p.unit, description: p.description, isFeatured: p.isFeatured, isActive: p.isActive };
     this.showModal = true;
   }
 
+  onImageSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!allowedTypes.includes(file.type)) {
+      alert('Chỉ chấp nhận ảnh JPG, PNG, WEBP hoặc GIF.');
+      input.value = '';
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Ảnh không được vượt quá 5MB.');
+      input.value = '';
+      return;
+    }
+
+    this.selectedImageFile = file;
+    this.imagePreview = URL.createObjectURL(file);
+  }
+
   saveProduct(): void {
-    const data: any = { ...this.formData };
-    const imageUrl = data.imageUrl?.trim();
-    delete data.imageUrl;
-    if (imageUrl) data.images = [imageUrl];
-    if (data.originalPrice === '') data.originalPrice = null;
+    const data = this.buildProductFormData();
     if (this.editingProduct) {
       this.productService.updateProduct(this.editingProduct.id, data).subscribe({ next: () => { this.loadProducts(); this.closeModal(); alert('Cập nhật thành công!'); }, error: (err) => alert(err.error?.message || 'Lỗi!') });
     } else {
@@ -179,5 +232,23 @@ export class AdminProductsComponent implements OnInit {
     if (confirm(`Xóa sản phẩm "${p.name}"?`)) {
       this.productService.deleteProduct(p.id).subscribe({ next: () => { this.loadProducts(); alert('Xóa thành công!'); }, error: (err) => alert(err.error?.message || 'Lỗi!') });
     }
+  }
+
+  private buildProductFormData(): FormData {
+    const formData = new FormData();
+    Object.keys(this.formData).forEach(key => {
+      const value = this.formData[key];
+      if (value !== undefined && value !== null) {
+        formData.append(key, String(value));
+      } else if (key === 'originalPrice') {
+        formData.append(key, '');
+      }
+    });
+
+    if (this.selectedImageFile) {
+      formData.append('images', this.selectedImageFile);
+    }
+
+    return formData;
   }
 }

@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
-import { AuthService, CartService } from '../../../core/services';
-import { User } from '../../../core/models';
+import { AuthService, CartService, SettingService } from '../../../core/services';
+import { SystemSetting, User } from '../../../core/models';
 import { filter } from 'rxjs/operators';
 
 @Component({
@@ -11,10 +11,10 @@ import { filter } from 'rxjs/operators';
       <div class="header-top">
         <div class="container">
           <div class="header-top-content">
-            <span class="welcome-text">Chào mừng đến với WebBanHoaQua!</span>
+            <span class="welcome-text">Chào mừng đến với {{ settings?.siteName || 'WebBanHoaQua' }}!</span>
             <div class="header-top-links">
-              <span><span class="material-icons">phone</span> 0909.123.456</span>
-              <span><span class="material-icons">email</span> contact&#64;webbanhoaqua.com</span>
+              <span><span class="material-icons">phone</span> {{ settings?.contactPhone || '0909.123.456' }}</span>
+              <span><span class="material-icons">email</span> {{ settings?.contactEmail || 'contact@webbanhoaqua.com' }}</span>
             </div>
           </div>
         </div>
@@ -29,7 +29,7 @@ import { filter } from 'rxjs/operators';
 
             <a routerLink="/" class="logo">
               <span class="logo-icon material-icons">eco</span>
-              <span class="logo-text">WebBan<span>HoaQua</span></span>
+              <span class="logo-text">{{ settings?.siteName || 'WebBanHoaQua' }}</span>
             </a>
 
             <nav class="main-nav" [class.open]="mobileMenuOpen">
@@ -369,6 +369,7 @@ import { filter } from 'rxjs/operators';
 })
 export class HeaderComponent implements OnInit {
   currentUser: User | null = null;
+  settings: SystemSetting | null = null;
   cartCount = 0;
   mobileMenuOpen = false;
   userMenuOpen = false;
@@ -377,6 +378,7 @@ export class HeaderComponent implements OnInit {
   constructor(
     private authService: AuthService,
     private cartService: CartService,
+    private settingService: SettingService,
     private router: Router
   ) {}
 
@@ -387,6 +389,14 @@ export class HeaderComponent implements OnInit {
 
     this.cartService.itemCount$.subscribe(count => {
       this.cartCount = count;
+    });
+
+    this.settingService.getSettings().subscribe({
+      next: (res) => {
+        if (res.success) {
+          this.settings = res.data;
+        }
+      }
     });
 
     this.router.events.pipe(

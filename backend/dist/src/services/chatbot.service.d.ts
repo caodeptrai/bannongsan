@@ -3,12 +3,12 @@ export declare class ChatbotService {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        productId: string | null;
-        category: string | null;
         isActive: boolean;
+        productId: string | null;
         question: string;
         answer: string;
         keywords: string | null;
+        category: string | null;
         priority: number;
     }[]>;
     getResponse(userMessage: string): Promise<{
@@ -30,36 +30,36 @@ export declare class ChatbotService {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        productId: string | null;
-        category: string | null;
         isActive: boolean;
+        productId: string | null;
         question: string;
         answer: string;
         keywords: string | null;
+        category: string | null;
         priority: number;
     }>;
     updateFAQ(id: string, data: any): Promise<{
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        productId: string | null;
-        category: string | null;
         isActive: boolean;
+        productId: string | null;
         question: string;
         answer: string;
         keywords: string | null;
+        category: string | null;
         priority: number;
     }>;
     deleteFAQ(id: string): Promise<{
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        productId: string | null;
-        category: string | null;
         isActive: boolean;
+        productId: string | null;
         question: string;
         answer: string;
         keywords: string | null;
+        category: string | null;
         priority: number;
     }>;
     getAllFAQsAdmin(params: {
@@ -77,12 +77,12 @@ export declare class ChatbotService {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            productId: string | null;
-            category: string | null;
             isActive: boolean;
+            productId: string | null;
             question: string;
             answer: string;
             keywords: string | null;
+            category: string | null;
             priority: number;
         })[];
         pagination: {
