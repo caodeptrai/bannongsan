@@ -3,9 +3,7 @@ import { AuthService, CartService } from './core/services';
 
 @Component({
   selector: 'app-root',
-  template: `
-    <router-outlet></router-outlet>
-  `
+  templateUrl: './app.component.html',
 })
 export class AppComponent implements OnInit {
   constructor(

@@ -1,0 +1,95 @@
+<div class="categories-page">
+  <div class="page-header">
+    <h1>Quản lý Danh mục</h1>
+    <button class="btn btn-primary" (click)="openModal()">
+      <span class="material-icons">add</span> Thêm danh mục
+    </button>
+  </div>
+
+  <div class="toolbar">
+    <div class="search-box">
+      <input type="text" [(ngModel)]="searchQuery" (keyup.enter)="searchCategories()" placeholder="Tìm tên danh mục, slug...">
+      <button (click)="searchCategories()"><span class="material-icons">search</span></button>
+    </div>
+    <span class="list-count">Tổng {{ totalCategories }} danh mục</span>
+  </div>
+
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Hình ảnh</th>
+          <th>Tên danh mục</th>
+          <th>Slug</th>
+          <th>Số sản phẩm</th>
+          <th>Trạng thái</th>
+          <th>Thao tác</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let cat of categories">
+          <td><img [src]="cat.image || 'https://via.placeholder.com/50'" class="cat-image"></td>
+          <td><strong>{{ cat.name }}</strong></td>
+          <td>{{ cat.slug }}</td>
+          <td>{{ cat._count?.products || 0 }}</td>
+          <td><span class="badge" [class.badge-success]="cat.isActive" [class.badge-secondary]="!cat.isActive">{{ cat.isActive ? 'Hoạt động' : 'Ẩn' }}</span></td>
+          <td>
+            <button class="action-btn" (click)="editCategory(cat)" title="Sửa"><span class="material-icons">edit</span></button>
+            <button class="action-btn danger" (click)="deleteCategory(cat)" title="Xóa"><span class="material-icons">delete</span></button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="pagination" *ngIf="totalPages > 1">
+    <button [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)">
+      <span class="material-icons">chevron_left</span>
+    </button>
+    <button *ngFor="let p of pages" [class.active]="p === currentPage" (click)="goToPage(p)">{{ p }}</button>
+    <button [disabled]="currentPage === totalPages" (click)="goToPage(currentPage + 1)">
+      <span class="material-icons">chevron_right</span>
+    </button>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal-backdrop" *ngIf="showModal" (click)="closeModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ editingCategory ? 'Sửa' : 'Thêm' }} danh mục</h2>
+        <button class="close-btn" (click)="closeModal()"><span class="material-icons">close</span></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Tên danh mục *</label>
+          <input type="text" [(ngModel)]="formData.name" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>Slug</label>
+          <input type="text" [(ngModel)]="formData.slug" class="form-control" placeholder="auto-generated">
+        </div>
+        <div class="form-group">
+          <label>Mô tả</label>
+          <textarea [(ngModel)]="formData.description" class="form-control" rows="3"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Hình ảnh URL</label>
+          <input type="text" [(ngModel)]="formData.image" class="form-control" placeholder="https://...">
+        </div>
+        <div class="form-group">
+          <label>Thứ tự</label>
+          <input type="number" [(ngModel)]="formData.sortOrder" class="form-control">
+        </div>
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" [(ngModel)]="formData.isActive"> Hoạt động
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" (click)="closeModal()">Hủy</button>
+        <button class="btn btn-primary" (click)="saveCategory()">{{ editingCategory ? 'Lưu' : 'Thêm' }}</button>
+      </div>
+    </div>
+  </div>
+</div>

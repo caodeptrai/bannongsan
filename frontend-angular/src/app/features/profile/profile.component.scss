@@ -1,0 +1,94 @@
+.profile-page { padding: 32px 0; }
+.page-title { font-size: 32px; margin-bottom: 32px; }
+
+.profile-grid {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 32px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.profile-card {
+  background: white;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.profile-avatar {
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+  color: white;
+  padding: 32px;
+  text-align: center;
+
+  .avatar-circle {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+
+    .material-icons { font-size: 48px; }
+  }
+
+  h2 { font-size: 20px; margin-bottom: 4px; }
+  .user-email { opacity: 0.8; font-size: 14px; }
+}
+
+.profile-nav {
+  padding: 16px;
+
+  .nav-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 12px 16px;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: var(--transition);
+    color: var(--text-color);
+    font-size: 14px;
+
+    .material-icons { font-size: 22px; color: var(--text-secondary); }
+
+    &:hover { background: var(--background-color); }
+    &.active {
+      background: rgba(46, 125, 50, 0.1);
+      color: var(--primary-color);
+
+      .material-icons { color: var(--primary-color); }
+    }
+  }
+}
+
+.profile-content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.content-section {
+  background: white;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  padding: 24px;
+
+  h3 {
+    font-size: 18px;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .form-group { margin-bottom: 16px; }
+  .form-group label { display: block; margin-bottom: 6px; font-weight: 500; }
+}

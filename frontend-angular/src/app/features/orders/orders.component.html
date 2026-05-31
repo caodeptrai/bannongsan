@@ -1,0 +1,60 @@
+<div class="orders-page">
+  <div class="container">
+    <h1 class="page-title">Lịch Sử Đơn Hàng</h1>
+
+    <div class="orders-list" *ngIf="orders.length > 0">
+      <div class="order-card" *ngFor="let order of orders">
+        <div class="order-header">
+          <div class="order-info">
+            <span class="order-number">Đơn hàng #{{ order.orderNumber }}</span>
+            <span class="order-date">{{ order.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
+          </div>
+          <span class="status-badge" [ngClass]="'status-' + order.status.toLowerCase()">
+            {{ getStatusText(order.status) }}
+          </span>
+        </div>
+
+        <div class="order-items">
+          <div class="item-preview" *ngFor="let item of order.items?.slice(0, 3)">
+            <img [src]="item.productImage || 'https://via.placeholder.com/50'" [alt]="item.productName">
+          </div>
+          <span class="more-items" *ngIf="order.items && order.items.length > 3">
+            +{{ order.items.length - 3 }} sản phẩm
+          </span>
+        </div>
+
+        <div class="order-footer">
+          <div class="order-total">
+            <span>Tổng cộng:</span>
+            <strong>{{ order.total | vndCurrency }}</strong>
+          </div>
+          <div class="order-actions">
+            <a [routerLink]="['/orders', order.id]" class="btn btn-outline btn-sm">Xem chi tiết</a>
+            <button class="btn btn-sm" *ngIf="order.status === 'PENDING'" (click)="cancelOrder(order)">
+              Hủy đơn
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="empty-state" *ngIf="orders.length === 0 && !loading">
+      <span class="material-icons">receipt_long</span>
+      <h3>Chưa có đơn hàng nào</h3>
+      <p>Hãy bắt đầu mua sắm để tạo đơn hàng</p>
+      <a routerLink="/products" class="btn btn-primary">Mua sắm ngay</a>
+    </div>
+
+    <div class="pagination" *ngIf="totalPages > 1">
+      <button [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)">
+        <span class="material-icons">chevron_left</span>
+      </button>
+      <button *ngFor="let page of visiblePages" [class.active]="page === currentPage" (click)="goToPage(page)">
+        {{ page }}
+      </button>
+      <button [disabled]="currentPage === totalPages" (click)="goToPage(currentPage + 1)">
+        <span class="material-icons">chevron_right</span>
+      </button>
+    </div>
+  </div>
+</div>

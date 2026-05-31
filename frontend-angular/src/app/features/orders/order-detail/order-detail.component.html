@@ -1,0 +1,98 @@
+<div class="order-detail-page" *ngIf="order">
+  <div class="container">
+    <a routerLink="/orders" class="back-link">
+      <span class="material-icons">arrow_back</span>
+      Quay lại danh sách đơn hàng
+    </a>
+
+    <h1 class="page-title">Chi Tiết Đơn Hàng #{{ order.orderNumber }}</h1>
+
+    <div class="order-status-banner" [ngClass]="'status-' + order.status.toLowerCase()">
+      <span class="material-icons">{{ getStatusIcon() }}</span>
+      <div class="status-info">
+        <strong>{{ getStatusText() }}</strong>
+        <span>{{ getStatusDescription() }}</span>
+      </div>
+    </div>
+
+    <div class="order-grid">
+      <div class="order-main">
+        <!-- Order Items -->
+        <div class="section-card">
+          <h2>Sản phẩm đã đặt</h2>
+          <div class="order-items">
+            <div class="order-item" *ngFor="let item of order.items">
+              <img [src]="item.productImage || 'https://via.placeholder.com/80'" [alt]="item.productName">
+              <div class="item-info">
+                <h4>{{ item.productName }}</h4>
+                <span>{{ item.quantity }} x {{ item.price | vndCurrency }}</span>
+              </div>
+              <div class="item-total">{{ item.total | vndCurrency }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Shipping Info -->
+        <div class="section-card">
+          <h2>Thông tin giao hàng</h2>
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="label">Người nhận</span>
+              <span class="value">{{ order.shippingName }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">Số điện thoại</span>
+              <span class="value">{{ order.shippingPhone }}</span>
+            </div>
+            <div class="info-item full">
+              <span class="label">Địa chỉ giao hàng</span>
+              <span class="value">{{ order.shippingAddress }}</span>
+            </div>
+            <div class="info-item full" *ngIf="order.shippingNote">
+              <span class="label">Ghi chú</span>
+              <span class="value">{{ order.shippingNote }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="order-sidebar">
+        <div class="section-card">
+          <h2>Tổng quan</h2>
+          <div class="summary-rows">
+            <div class="summary-row">
+              <span>Tạm tính</span>
+              <span>{{ order.subtotal | vndCurrency }}</span>
+            </div>
+            <div class="summary-row">
+              <span>Phí vận chuyển</span>
+              <span>{{ order.shippingFee | vndCurrency }}</span>
+            </div>
+            <div class="summary-row" *ngIf="order.discount > 0">
+              <span>Giảm giá</span>
+              <span class="text-success">-{{ order.discount | vndCurrency }}</span>
+            </div>
+            <div class="summary-row total">
+              <span>Tổng cộng</span>
+              <span>{{ order.total | vndCurrency }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <h2>Phương thức thanh toán</h2>
+          <p class="payment-method">{{ getPaymentMethodText() }}</p>
+        </div>
+
+        <div class="section-card">
+          <h2>Ngày đặt hàng</h2>
+          <p class="order-date">{{ order.createdAt | date:'dd/MM/yyyy HH:mm' }}</p>
+        </div>
+
+        <button class="btn btn-danger" *ngIf="order.status === 'PENDING'" (click)="cancelOrder()">
+          Hủy đơn hàng
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

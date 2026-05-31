@@ -23,8 +23,8 @@ router.get('/related/:productId/:categoryId', limitQueryValidation, validateRequ
 
 // Admin routes
 router.get('/admin/all', authMiddleware, adminMiddleware, adminProductQueryValidation, validateRequest, productController.getAllAdmin);
-router.post('/', authMiddleware, adminMiddleware, uploadMiddleware, productValidation, validateRequest, productController.create);
-router.put('/:id', authMiddleware, adminMiddleware, uploadMiddleware, productUpdateValidation, validateRequest, productController.update);
+router.post('/', authMiddleware, adminMiddleware, uploadMiddleware, productValidation, validateRequest, productController.create.bind(productController));
+router.put('/:id', authMiddleware, adminMiddleware, uploadMiddleware, productUpdateValidation, validateRequest, productController.update.bind(productController));
 router.delete('/:id', authMiddleware, adminMiddleware, productController.delete);
 
 router.get('/:id', productController.getById);

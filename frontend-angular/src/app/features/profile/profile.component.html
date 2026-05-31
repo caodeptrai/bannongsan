@@ -1,0 +1,76 @@
+<div class="profile-page">
+  <div class="container">
+    <h1 class="page-title">Hồ Sơ Cá Nhân</h1>
+
+    <div class="profile-grid">
+      <div class="profile-card">
+        <div class="profile-avatar">
+          <div class="avatar-circle">
+            <span class="material-icons">person</span>
+          </div>
+          <h2>{{ user?.fullName }}</h2>
+          <span class="user-email">{{ user?.email }}</span>
+        </div>
+
+        <nav class="profile-nav">
+          <button class="nav-btn active">
+            <span class="material-icons">person</span>
+            Thông tin cá nhân
+          </button>
+          <button class="nav-btn" routerLink="/orders">
+            <span class="material-icons">receipt_long</span>
+            Lịch sử đơn hàng
+          </button>
+        </nav>
+      </div>
+
+      <div class="profile-content">
+        <div class="content-section">
+          <h3>Thông tin cá nhân</h3>
+          <form [formGroup]="profileForm">
+            <div class="form-group">
+              <label>Họ và tên</label>
+              <input type="text" formControlName="fullName" class="form-control">
+            </div>
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" [value]="user?.email" class="form-control" disabled>
+            </div>
+            <div class="form-group">
+              <label>Số điện thoại</label>
+              <input type="tel" formControlName="phone" class="form-control" placeholder="Nhập số điện thoại">
+            </div>
+            <div class="form-group">
+              <label>Địa chỉ</label>
+              <textarea formControlName="address" class="form-control" rows="3" placeholder="Nhập địa chỉ"></textarea>
+            </div>
+            <button type="button" class="btn btn-primary" [disabled]="loading" (click)="updateProfile()">
+              {{ loading ? 'Đang lưu...' : 'Lưu thay đổi' }}
+            </button>
+          </form>
+        </div>
+
+        <div class="content-section">
+          <h3>Đổi mật khẩu</h3>
+          <form [formGroup]="passwordForm">
+            <div class="form-group">
+              <label>Mật khẩu hiện tại</label>
+              <input type="password" formControlName="oldPassword" class="form-control">
+            </div>
+            <div class="form-group">
+              <label>Mật khẩu mới</label>
+              <input type="password" formControlName="newPassword" class="form-control">
+            </div>
+            <div class="form-group">
+              <label>Xác nhận mật khẩu mới</label>
+              <input type="password" formControlName="confirmPassword" class="form-control">
+            </div>
+            <button type="button" class="btn btn-primary" [disabled]="passwordForm.invalid || loading" (click)="changePassword()">
+              Đổi mật khẩu
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

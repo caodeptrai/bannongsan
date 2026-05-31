@@ -1,0 +1,95 @@
+<div class="cart-page">
+  <div class="container">
+    <h1 class="page-title">Giỏ Hàng</h1>
+
+    <div class="cart-layout" *ngIf="items.length > 0">
+      <!-- Cart Items -->
+      <div class="cart-items">
+        <div class="cart-header">
+          <span>Sản phẩm</span>
+          <span>Đơn giá</span>
+          <span>Số lượng</span>
+          <span>Thành tiền</span>
+          <span></span>
+        </div>
+
+        <div class="cart-item" *ngFor="let item of items">
+          <div class="item-product">
+            <img [src]="getProductImage(item)" [alt]="item.product.name">
+            <div class="item-info">
+              <h3>{{ item.product.name }}</h3>
+              <span class="item-unit">{{ item.product.unit }}</span>
+            </div>
+          </div>
+          <div class="item-price">
+            {{ item.product!.price | vndCurrency }}
+          </div>
+          <div class="item-quantity">
+            <button (click)="updateQuantity(item, -1)" [disabled]="item.quantity <= 1">-</button>
+            <input type="number" [value]="item.quantity" (change)="onQuantityChange($event, item)" min="1" [max]="item.product!.stock">
+            <button (click)="updateQuantity(item, 1)" [disabled]="item.quantity >= item.product!.stock">+</button>
+          </div>
+          <div class="item-total">
+            {{ getItemTotal(item) | vndCurrency }}
+          </div>
+          <div class="item-actions">
+            <button class="delete-btn" (click)="removeItem(item)">
+              <span class="material-icons">delete</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="cart-actions">
+          <button class="btn btn-outline" routerLink="/products">
+            <span class="material-icons">arrow_back</span>
+            Tiếp tục mua sắm
+          </button>
+          <button class="btn btn-danger-outline" (click)="clearCart()">
+            <span class="material-icons">delete_sweep</span>
+            Xóa giỏ hàng
+          </button>
+        </div>
+      </div>
+
+      <!-- Order Summary -->
+      <div class="order-summary">
+        <h2>Tổng quan đơn hàng</h2>
+        <div class="summary-row">
+          <span>Tạm tính ({{ items.length }} sản phẩm)</span>
+          <span>{{ subtotal | vndCurrency }}</span>
+        </div>
+        <div class="summary-row">
+          <span>Phí vận chuyển</span>
+          <span>{{ shippingFee | vndCurrency }}</span>
+        </div>
+        <div class="summary-row discount" *ngIf="discount > 0">
+          <span>Giảm giá</span>
+          <span class="text-error">-{{ discount | vndCurrency }}</span>
+        </div>
+        <div class="summary-row total">
+          <span>Tổng cộng</span>
+          <span>{{ total | vndCurrency }}</span>
+        </div>
+        <div class="free-ship-notice" *ngIf="subtotal < 500000 && subtotal >= 200000">
+          <span class="material-icons">local_shipping</span>
+          Mua thêm {{ (500000 - subtotal) | vndCurrency }} để được miễn phí giao hàng!
+        </div>
+        <button class="btn btn-primary btn-block btn-lg" routerLink="/checkout">
+          Tiến hành đặt hàng
+        </button>
+        <p class="checkout-notice">
+          <span class="material-icons">info</span>
+          Miễn phí giao hàng cho đơn từ 500.000đ
+        </p>
+      </div>
+    </div>
+
+    <!-- Empty Cart -->
+    <div class="empty-cart" *ngIf="items.length === 0 && !loading">
+      <span class="material-icons">shopping_cart</span>
+      <h2>Giỏ hàng trống</h2>
+      <p>Hãy thêm sản phẩm vào giỏ hàng để tiếp tục mua sắm</p>
+      <a routerLink="/products" class="btn btn-primary">Mua sắm ngay</a>
+    </div>
+  </div>
+</div>

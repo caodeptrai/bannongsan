@@ -1,0 +1,40 @@
+<div class="toast-stack" aria-live="polite" aria-atomic="true">
+  <div class="toast" *ngFor="let toast of feedback.toasts$ | async; trackBy: trackToast" [ngClass]="toast.type">
+    <span class="material-icons toast-icon">{{ getIcon(toast.type) }}</span>
+    <div class="toast-content">
+      <strong>{{ toast.title }}</strong>
+      <span>{{ toast.message }}</span>
+    </div>
+    <button type="button" class="toast-close" (click)="feedback.dismissToast(toast.id)" aria-label="Đóng thông báo">
+      <span class="material-icons">close</span>
+    </button>
+  </div>
+</div>
+
+<ng-container *ngIf="feedback.modal$ | async as modal">
+  <div class="feedback-backdrop" (click)="feedback.resolveModal(false)">
+    <section class="confirm-dialog" [ngClass]="modal.type" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+      <div class="dialog-icon">
+        <span class="material-icons">{{ getIcon(modal.type) }}</span>
+      </div>
+      <div class="dialog-content">
+        <h2>{{ modal.title }}</h2>
+        <p>{{ modal.message }}</p>
+      </div>
+      <div class="dialog-actions">
+        <button type="button" class="btn btn-outline" (click)="feedback.resolveModal(false)">
+          {{ modal.cancelText }}
+        </button>
+        <button
+          type="button"
+          class="btn"
+          [class.btn-primary]="!modal.destructive"
+          [class.btn-danger]="modal.destructive"
+          (click)="feedback.resolveModal(true)"
+        >
+          {{ modal.confirmText }}
+        </button>
+      </div>
+    </section>
+  </div>
+</ng-container>

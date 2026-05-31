@@ -1,0 +1,90 @@
+<div class="admin-wrapper" [class.sidebar-collapsed]="sidebarCollapsed">
+  <aside class="admin-sidebar" [class.open]="sidebarOpen" [class.collapsed]="sidebarCollapsed">
+    <div class="sidebar-header">
+      <div class="logo">
+        <span class="material-icons">eco</span>
+        <span class="logo-text">WebBan<span>HoaQua</span></span>
+      </div>
+      <button
+        type="button"
+        class="sidebar-collapse-btn"
+        (click)="toggleSidebarCollapsed()"
+        [attr.aria-label]="sidebarCollapsed ? 'Mở rộng menu admin' : 'Thu nhỏ menu admin'"
+      >
+        <span class="material-icons">{{ sidebarCollapsed ? 'chevron_right' : 'chevron_left' }}</span>
+      </button>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <span class="nav-section-title">Tổng quan</span>
+        <a routerLink="/admin/dashboard" routerLinkActive="active" class="nav-item">
+          <span class="material-icons">dashboard</span>
+          <span class="nav-label">Dashboard</span>
+        </a>
+      </div>
+
+      <div class="nav-section">
+        <span class="nav-section-title">Quản lý</span>
+        <a routerLink="/admin/categories" routerLinkActive="active" class="nav-item">
+          <span class="material-icons">category</span>
+          <span class="nav-label">Danh mục</span>
+        </a>
+        <a routerLink="/admin/products" routerLinkActive="active" class="nav-item">
+          <span class="material-icons">inventory_2</span>
+          <span class="nav-label">Sản phẩm</span>
+        </a>
+        <a routerLink="/admin/orders" routerLinkActive="active" class="nav-item">
+          <span class="material-icons">receipt_long</span>
+          <span class="nav-label">Đơn hàng</span>
+        </a>
+        <a routerLink="/admin/users" routerLinkActive="active" class="nav-item">
+          <span class="material-icons">people</span>
+          <span class="nav-label">Khách hàng</span>
+        </a>
+        <a routerLink="/admin/statistics" routerLinkActive="active" class="nav-item">
+          <span class="material-icons">bar_chart</span>
+          <span class="nav-label">Thống kê</span>
+        </a>
+        <a routerLink="/admin/settings" routerLinkActive="active" class="nav-item">
+          <span class="material-icons">settings</span>
+          <span class="nav-label">Cấu hình</span>
+        </a>
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <a routerLink="/" target="_blank" class="nav-item">
+        <span class="material-icons">open_in_new</span>
+        <span class="nav-label">Xem website</span>
+      </a>
+      <button class="nav-item" (click)="logout()">
+        <span class="material-icons">logout</span>
+        <span class="nav-label">Đăng xuất</span>
+      </button>
+    </div>
+  </aside>
+  <div class="sidebar-backdrop" [class.show]="sidebarOpen" (click)="toggleSidebar()"></div>
+
+  <div class="admin-main">
+    <header class="admin-header">
+      <div class="header-left">
+        <button class="toggle-btn" type="button" (click)="toggleSidebar()" aria-label="Mở menu admin">
+          <span class="material-icons">menu</span>
+        </button>
+        <h1 class="page-title">{{ pageTitle }}</h1>
+      </div>
+      <div class="header-right">
+        <div class="admin-info">
+          <span class="material-icons">account_circle</span>
+          <span>{{ currentUser?.fullName }}</span>
+          <span class="badge badge-primary">Admin</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="admin-content">
+      <router-outlet></router-outlet>
+    </div>
+  </div>
+</div>

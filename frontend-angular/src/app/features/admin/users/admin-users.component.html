@@ -1,0 +1,38 @@
+<div class="users-page">
+  <div class="page-header"><h1>Quản lý Khách hàng</h1></div>
+  <div class="toolbar">
+    <div class="search-box">
+      <input type="text" [(ngModel)]="searchQuery" (keyup.enter)="applyFilters()" placeholder="Tìm kiếm...">
+      <button (click)="applyFilters()"><span class="material-icons">search</span></button>
+    </div>
+    <select [(ngModel)]="filterRole" (change)="applyFilters()" class="form-control">
+      <option value="">Tất cả vai trò</option>
+      <option value="USER">Khách hàng</option>
+      <option value="ADMIN">Admin</option>
+    </select>
+  </div>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr><th>Khách hàng</th><th>Email</th><th>Điện thoại</th><th>Vai trò</th><th>Trạng thái</th><th>Đơn hàng</th><th>Ngày tạo</th><th>Thao tác</th></tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let user of users">
+          <td><strong>{{ user.fullName }}</strong></td>
+          <td>{{ user.email }}</td>
+          <td>{{ user.phone || '-' }}</td>
+          <td><span class="badge" [class.badge-primary]="user.role === 'ADMIN'" [class.badge-secondary]="user.role === 'USER'">{{ user.role === 'ADMIN' ? 'Admin' : 'Khách hàng' }}</span></td>
+          <td><span class="badge" [class.badge-success]="user.status === 'ACTIVE'" [class.badge-error]="user.status === 'LOCKED'" [class.badge-warning]="user.status === 'INACTIVE'">{{ getStatusText(user.status) }}</span></td>
+          <td>{{ user._count?.orders || 0 }}</td>
+          <td>{{ user.createdAt | date:'dd/MM/yyyy' }}</td>
+          <td>
+            <button class="action-btn" (click)="changeStatus(user)" title="Đổi trạng thái"><span class="material-icons">sync</span></button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="pagination" *ngIf="totalPages > 1">
+    <button *ngFor="let p of pages" [class.active]="p === currentPage" (click)="goToPage(p)">{{ p }}</button>
+  </div>
+</div>

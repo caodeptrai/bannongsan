@@ -1,0 +1,119 @@
+<div class="checkout-page">
+  <div class="container">
+    <h1 class="page-title">Thanh Toán Đơn Hàng</h1>
+
+    <div class="checkout-layout">
+      <!-- Shipping Form -->
+      <div class="checkout-form">
+        <div class="form-section">
+          <h2>Thông tin giao hàng</h2>
+          <form [formGroup]="checkoutForm">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="shippingName">Họ và tên người nhận <span class="required">*</span></label>
+                <input type="text" id="shippingName" formControlName="shippingName" class="form-control"
+                       [class.error]="checkoutForm.get('shippingName')?.invalid && checkoutForm.get('shippingName')?.touched">
+                <span class="error-message" *ngIf="checkoutForm.get('shippingName')?.errors?.['required'] && checkoutForm.get('shippingName')?.touched">
+                  Vui lòng nhập họ tên
+                </span>
+              </div>
+              <div class="form-group">
+                <label for="shippingPhone">Số điện thoại <span class="required">*</span></label>
+                <input type="tel" id="shippingPhone" formControlName="shippingPhone" class="form-control"
+                       [class.error]="checkoutForm.get('shippingPhone')?.invalid && checkoutForm.get('shippingPhone')?.touched">
+                <span class="error-message" *ngIf="checkoutForm.get('shippingPhone')?.errors?.['required'] && checkoutForm.get('shippingPhone')?.touched">
+                  Vui lòng nhập số điện thoại
+                </span>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="shippingAddress">Địa chỉ giao hàng <span class="required">*</span></label>
+              <input type="text" id="shippingAddress" formControlName="shippingAddress" class="form-control"
+                     [class.error]="checkoutForm.get('shippingAddress')?.invalid && checkoutForm.get('shippingAddress')?.touched">
+              <span class="error-message" *ngIf="checkoutForm.get('shippingAddress')?.errors?.['required'] && checkoutForm.get('shippingAddress')?.touched">
+                Vui lòng nhập địa chỉ giao hàng
+              </span>
+            </div>
+
+            <div class="form-group">
+              <label for="shippingNote">Ghi chú đơn hàng</label>
+              <textarea id="shippingNote" formControlName="shippingNote" class="form-control" rows="3"
+                        placeholder="Ví dụ: Giao giờ hành chính, gọi trước khi giao..."></textarea>
+            </div>
+          </form>
+        </div>
+
+        <div class="form-section">
+          <h2>Phương thức thanh toán</h2>
+          <div class="payment-methods">
+            <label class="payment-method" [class.active]="paymentMethod === 'COD'">
+              <input type="radio" name="payment" value="COD" [(ngModel)]="paymentMethod">
+              <div class="method-icon">
+                <span class="material-icons">payments</span>
+              </div>
+              <div class="method-info">
+                <strong>Thanh toán khi nhận hàng (COD)</strong>
+                <span>Trả tiền mặt khi nhận được hàng</span>
+              </div>
+            </label>
+            <label class="payment-method" [class.active]="paymentMethod === 'BANK_TRANSFER'">
+              <input type="radio" name="payment" value="BANK_TRANSFER" [(ngModel)]="paymentMethod">
+              <div class="method-icon">
+                <span class="material-icons">account_balance</span>
+              </div>
+              <div class="method-info">
+                <strong>Chuyển khoản ngân hàng</strong>
+                <span>Chuyển khoản trước qua tài khoản ngân hàng</span>
+              </div>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Order Summary -->
+      <div class="order-summary">
+        <h2>Đơn hàng của bạn</h2>
+
+        <div class="summary-items">
+          <div class="summary-item" *ngFor="let item of items">
+            <img [src]="getProductImage(item)" [alt]="item.product.name">
+            <div class="item-info">
+              <span class="item-name">{{ item.product.name }}</span>
+              <span class="item-qty">x{{ item.quantity }}</span>
+            </div>
+            <span class="item-price">{{ getItemTotal(item) | vndCurrency }}</span>
+          </div>
+        </div>
+
+        <div class="summary-totals">
+          <div class="total-row">
+            <span>Tạm tính</span>
+            <span>{{ subtotal | vndCurrency }}</span>
+          </div>
+          <div class="total-row">
+            <span>Phí vận chuyển</span>
+            <span>{{ shippingFee | vndCurrency }}</span>
+          </div>
+          <div class="total-row discount" *ngIf="discount > 0">
+            <span>Giảm giá</span>
+            <span>-{{ discount | vndCurrency }}</span>
+          </div>
+          <div class="total-row grand-total">
+            <span>Tổng cộng</span>
+            <span>{{ total | vndCurrency }}</span>
+          </div>
+        </div>
+
+        <button class="btn btn-primary btn-block btn-lg" [disabled]="checkoutForm.invalid || loading || items.length === 0" (click)="placeOrder()">
+          <span *ngIf="!loading">Đặt hàng ngay</span>
+          <span *ngIf="loading" class="spinner"></span>
+        </button>
+
+        <p class="terms-notice">
+          Bằng việc đặt hàng, bạn đồng ý với <a href="#">Điều khoản dịch vụ</a> và <a href="#">Chính sách đổi trả</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>

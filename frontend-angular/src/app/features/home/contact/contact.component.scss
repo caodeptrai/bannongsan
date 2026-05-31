@@ -1,0 +1,5 @@
+.page-header { background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)); color: white; padding: 64px 0; text-align: center; h1 { font-size: 40px; margin-bottom: 12px; } p { opacity: 0.9; font-size: 18px; } }
+.contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; padding: 64px 0; @media (max-width: 768px) { grid-template-columns: 1fr; } }
+.contact-info, .contact-form-wrapper { background: white; border-radius: 12px; padding: 32px; box-shadow: var(--shadow); h2 { font-size: 24px; margin-bottom: 24px; padding-bottom: 12px; border-bottom: 2px solid var(--primary-color); } }
+.info-item { display: flex; gap: 16px; margin-bottom: 24px; .material-icons { font-size: 28px; color: var(--primary-color); flex-shrink: 0; } strong { display: block; margin-bottom: 4px; } p { color: var(--text-secondary); margin: 0; } }
+.form-group { margin-bottom: 16px; label { display: block; margin-bottom: 6px; font-weight: 500; } }

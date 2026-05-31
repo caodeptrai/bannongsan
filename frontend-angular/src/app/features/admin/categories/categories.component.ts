@@ -1,121 +1,11 @@
 import { Component, OnInit } from '@angular/core';
-import { CategoryService } from '../../../core/services';
+import { CategoryService, UiFeedbackService } from '../../../core/services';
 import { Category } from '../../../core/models';
 
 @Component({
   selector: 'app-categories',
-  template: `
-    <div class="categories-page">
-      <div class="page-header">
-        <h1>Quản lý Danh mục</h1>
-        <button class="btn btn-primary" (click)="openModal()">
-          <span class="material-icons">add</span> Thêm danh mục
-        </button>
-      </div>
-
-      <div class="toolbar">
-        <div class="search-box">
-          <input type="text" [(ngModel)]="searchQuery" (keyup.enter)="searchCategories()" placeholder="Tìm tên danh mục, slug...">
-          <button (click)="searchCategories()"><span class="material-icons">search</span></button>
-        </div>
-        <span class="list-count">Tổng {{ totalCategories }} danh mục</span>
-      </div>
-
-      <div class="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>Hình ảnh</th>
-              <th>Tên danh mục</th>
-              <th>Slug</th>
-              <th>Số sản phẩm</th>
-              <th>Trạng thái</th>
-              <th>Thao tác</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let cat of categories">
-              <td><img [src]="cat.image || 'https://via.placeholder.com/50'" class="cat-image"></td>
-              <td><strong>{{ cat.name }}</strong></td>
-              <td>{{ cat.slug }}</td>
-              <td>{{ cat._count?.products || 0 }}</td>
-              <td><span class="badge" [class.badge-success]="cat.isActive" [class.badge-secondary]="!cat.isActive">{{ cat.isActive ? 'Hoạt động' : 'Ẩn' }}</span></td>
-              <td>
-                <button class="action-btn" (click)="editCategory(cat)" title="Sửa"><span class="material-icons">edit</span></button>
-                <button class="action-btn danger" (click)="deleteCategory(cat)" title="Xóa"><span class="material-icons">delete</span></button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div class="pagination" *ngIf="totalPages > 1">
-        <button [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)">
-          <span class="material-icons">chevron_left</span>
-        </button>
-        <button *ngFor="let p of pages" [class.active]="p === currentPage" (click)="goToPage(p)">{{ p }}</button>
-        <button [disabled]="currentPage === totalPages" (click)="goToPage(currentPage + 1)">
-          <span class="material-icons">chevron_right</span>
-        </button>
-      </div>
-
-      <!-- Modal -->
-      <div class="modal-backdrop" *ngIf="showModal" (click)="closeModal()">
-        <div class="modal" (click)="$event.stopPropagation()">
-          <div class="modal-header">
-            <h2>{{ editingCategory ? 'Sửa' : 'Thêm' }} danh mục</h2>
-            <button class="close-btn" (click)="closeModal()"><span class="material-icons">close</span></button>
-          </div>
-          <div class="modal-body">
-            <div class="form-group">
-              <label>Tên danh mục *</label>
-              <input type="text" [(ngModel)]="formData.name" class="form-control">
-            </div>
-            <div class="form-group">
-              <label>Slug</label>
-              <input type="text" [(ngModel)]="formData.slug" class="form-control" placeholder="auto-generated">
-            </div>
-            <div class="form-group">
-              <label>Mô tả</label>
-              <textarea [(ngModel)]="formData.description" class="form-control" rows="3"></textarea>
-            </div>
-            <div class="form-group">
-              <label>Hình ảnh URL</label>
-              <input type="text" [(ngModel)]="formData.image" class="form-control" placeholder="https://...">
-            </div>
-            <div class="form-group">
-              <label>Thứ tự</label>
-              <input type="number" [(ngModel)]="formData.sortOrder" class="form-control">
-            </div>
-            <div class="form-group">
-              <label class="checkbox-label">
-                <input type="checkbox" [(ngModel)]="formData.isActive"> Hoạt động
-              </label>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button class="btn btn-outline" (click)="closeModal()">Hủy</button>
-            <button class="btn btn-primary" (click)="saveCategory()">{{ editingCategory ? 'Lưu' : 'Thêm' }}</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  `,
-  styles: [`
-    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; h1 { font-size: 24px; } }
-    .list-count { color: var(--text-secondary); font-size: 14px; font-weight: 600; margin-left: auto; }
-    .table-container { background: white; border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; }
-    table { th, td { padding: 16px; } }
-    .cat-image { width: 50px; height: 50px; object-fit: cover; border-radius: 8px; }
-    .action-btn { background: none; border: none; padding: 6px; cursor: pointer; color: var(--text-secondary); &:hover { color: var(--primary-color); } &.danger:hover { color: var(--error-color); } .material-icons { font-size: 20px; } }
-    .modal-backdrop { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-    .modal { background: white; border-radius: 12px; width: 500px; max-width: 90vw; }
-    .modal-header { padding: 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; h2 { font-size: 18px; margin: 0; } }
-    .close-btn { background: none; border: none; cursor: pointer; .material-icons { font-size: 24px; } }
-    .modal-body { padding: 20px; max-height: 60vh; overflow-y: auto; }
-    .modal-footer { padding: 16px 20px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 12px; }
-    .checkbox-label { display: flex; align-items: center; gap: 8px; cursor: pointer; }
-  `]
+  templateUrl: './categories.component.html',
+  styleUrls: ['./categories.component.scss'],
 })
 export class CategoriesComponent implements OnInit {
   categories: Category[] = [];
@@ -137,7 +27,10 @@ export class CategoriesComponent implements OnInit {
     return pages;
   }
 
-  constructor(private categoryService: CategoryService) {}
+  constructor(
+    private categoryService: CategoryService,
+    private feedback: UiFeedbackService
+  ) {}
 
   ngOnInit(): void { this.loadCategories(); }
 
@@ -177,24 +70,41 @@ export class CategoriesComponent implements OnInit {
     const data = this.buildPayload();
     if (this.editingCategory) {
       this.categoryService.updateCategory(this.editingCategory.id, data).subscribe({
-        next: () => { this.loadCategories(); this.closeModal(); alert('Cập nhật thành công!'); },
-        error: (err) => alert(err.error?.message || 'Lỗi!')
+        next: () => {
+          this.loadCategories();
+          this.closeModal();
+          this.feedback.success('Cập nhật danh mục thành công.');
+        },
+        error: (err) => this.feedback.error(err.error?.message || 'Không thể cập nhật danh mục.')
       });
     } else {
       this.categoryService.createCategory(data).subscribe({
-        next: () => { this.loadCategories(); this.closeModal(); alert('Thêm thành công!'); },
-        error: (err) => alert(err.error?.message || 'Lỗi!')
+        next: () => {
+          this.loadCategories();
+          this.closeModal();
+          this.feedback.success('Thêm danh mục thành công.');
+        },
+        error: (err) => this.feedback.error(err.error?.message || 'Không thể thêm danh mục.')
       });
     }
   }
 
-  deleteCategory(cat: Category): void {
-    if (confirm(`Xóa danh mục "${cat.name}"?`)) {
-      this.categoryService.deleteCategory(cat.id).subscribe({
-        next: () => { this.loadCategories(); alert('Xóa thành công!'); },
-        error: (err) => alert(err.error?.message || 'Lỗi!')
-      });
-    }
+  async deleteCategory(cat: Category): Promise<void> {
+    const confirmed = await this.feedback.confirm({
+      title: 'Xóa danh mục',
+      message: `Xóa danh mục "${cat.name}"? Thao tác này không thể hoàn tác nếu danh mục không còn ràng buộc dữ liệu.`,
+      confirmText: 'Xóa danh mục',
+      destructive: true,
+    });
+    if (!confirmed) return;
+
+    this.categoryService.deleteCategory(cat.id).subscribe({
+      next: () => {
+        this.loadCategories();
+        this.feedback.success('Xóa danh mục thành công.');
+      },
+      error: (err) => this.feedback.error(err.error?.message || 'Không thể xóa danh mục.')
+    });
   }
 
   private buildPayload(): Partial<Category> {

@@ -1,0 +1,103 @@
+<div class="product-detail-page" *ngIf="product">
+  <div class="container">
+    <div class="breadcrumb">
+      <a routerLink="/">Trang chủ</a>
+      <span class="material-icons">chevron_right</span>
+      <a routerLink="/products">Sản phẩm</a>
+      <span class="material-icons">chevron_right</span>
+      <a [routerLink]="['/products']" [queryParams]="{categoryId: product.categoryId}">{{ product.category?.name }}</a>
+      <span class="material-icons">chevron_right</span>
+      <span>{{ product.name }}</span>
+    </div>
+
+    <div class="product-detail-grid">
+      <!-- Product Images -->
+      <div class="product-images">
+        <div class="main-image">
+          <img [src]="selectedImage" [alt]="product.name">
+          <span class="discount-badge" *ngIf="discountPercent > 0">-{{ discountPercent }}%</span>
+        </div>
+        <div class="thumbnail-images" *ngIf="product.images && product.images.length > 1">
+          <img *ngFor="let img of product.images" [src]="img.url" [alt]="product.name"
+               [class.active]="selectedImage === img.url" (click)="selectImage(img.url)">
+        </div>
+      </div>
+
+      <!-- Product Info -->
+      <div class="product-info">
+        <span class="product-category">{{ product.category?.name }}</span>
+        <h1 class="product-name">{{ product.name }}</h1>
+
+        <div class="product-meta">
+          <div class="rating">
+            <span *ngFor="let star of [1,2,3,4,5]" class="material-icons" [class.filled]="star <= product.rating">star</span>
+            <span class="rating-text">{{ product.rating }}/5</span>
+            <span class="review-count">({{ product.reviewCount }} đánh giá)</span>
+          </div>
+          <span class="sold-count">{{ product.soldCount }} đã bán</span>
+        </div>
+
+        <div class="product-price">
+          <span class="current-price">{{ product.price | vndCurrency }}</span>
+          <span class="original-price" *ngIf="product.originalPrice && product.originalPrice > product.price">
+            {{ product.originalPrice | vndCurrency }}
+          </span>
+          <span class="unit">/{{ product.unit }}</span>
+        </div>
+
+        <div class="product-stock">
+          <span class="material-icons" [class.in-stock]="product.stock > 0" [class.out-of-stock]="product.stock === 0">
+            {{ product.stock > 0 ? 'check_circle' : 'cancel' }}
+          </span>
+          <span>{{ product.stock > 0 ? 'Còn hàng (' + product.stock + ' ' + product.unit + ')' : 'Hết hàng' }}</span>
+        </div>
+
+        <div class="product-description">
+          <h3>Mô tả sản phẩm</h3>
+          <p>{{ product.description }}</p>
+        </div>
+
+        <div class="product-actions">
+          <div class="quantity-selector">
+            <button (click)="decreaseQuantity()" [disabled]="quantity <= 1">-</button>
+            <input type="number" [(ngModel)]="quantity" min="1" [max]="product.stock">
+            <button (click)="increaseQuantity()">+</button>
+          </div>
+          <button class="btn btn-primary btn-lg" (click)="addToCart()" [disabled]="product.stock === 0">
+            <span class="material-icons">add_shopping_cart</span>
+            Thêm vào giỏ hàng
+          </button>
+        </div>
+
+        <div class="product-features">
+          <div class="feature">
+            <span class="material-icons">local_shipping</span>
+            <span>Giao hàng trong 2-4 giờ</span>
+          </div>
+          <div class="feature">
+            <span class="material-icons">verified</span>
+            <span>Cam kết chất lượng</span>
+          </div>
+          <div class="feature">
+            <span class="material-icons">swap_horiz</span>
+            <span>Đổi trả trong 24h</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Related Products -->
+    <section class="related-products" *ngIf="relatedProducts.length > 0">
+      <h2>Sản phẩm liên quan</h2>
+      <div class="products-grid grid grid-4">
+        <app-product-card *ngFor="let p of relatedProducts" [product]="p"></app-product-card>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- Loading -->
+<div class="loading-state" *ngIf="loading">
+  <div class="spinner"></div>
+  <p>Đang tải thông tin sản phẩm...</p>
+</div>

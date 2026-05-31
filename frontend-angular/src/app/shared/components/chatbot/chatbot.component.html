@@ -1,0 +1,49 @@
+<div class="chatbot-container">
+  <div class="chatbot-window" *ngIf="isOpen">
+    <div class="chatbot-header">
+      <div class="header-info">
+        <span class="material-icons">smart_toy</span>
+        <h3>Hỗ trợ WebBanHoaQua</h3>
+      </div>
+      <button class="close-btn" (click)="toggleChat()">
+        <span class="material-icons">close</span>
+      </button>
+    </div>
+
+    <div class="chatbot-messages" #messageContainer>
+      <div class="chat-message bot">
+        Xin chào! 👋 Tôi là trợ lý của WebBanHoaQua. Tôi có thể giúp gì cho bạn hôm nay?
+      </div>
+
+      <div class="chat-suggestions" *ngIf="messages.length === 1">
+        <button *ngFor="let suggestion of suggestions" (click)="sendMessage(suggestion)">
+          {{ suggestion }}
+        </button>
+      </div>
+
+      <div *ngFor="let msg of messages" class="chat-message" [class.user]="msg.type === 'user'" [class.bot]="msg.type === 'bot'">
+        {{ msg.message }}
+      </div>
+
+      <div class="typing-indicator" *ngIf="isTyping">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+
+    <div class="chatbot-input">
+      <input
+        type="text"
+        [(ngModel)]="userMessage"
+        (keyup.enter)="sendMessage(userMessage)"
+        placeholder="Nhập tin nhắn..."
+        [disabled]="isTyping">
+      <button (click)="sendMessage(userMessage)" [disabled]="!userMessage.trim() || isTyping">
+        <span class="material-icons">send</span>
+      </button>
+    </div>
+  </div>
+
+  <button class="chatbot-toggle" (click)="toggleChat()" [class.open]="isOpen">
+    <span class="material-icons">{{ isOpen ? 'close' : 'chat' }}</span>
+  </button>
+</div>

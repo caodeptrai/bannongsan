@@ -1,0 +1,123 @@
+<div class="statistics-page">
+  <div class="page-header">
+    <h1>Thống kê doanh thu</h1>
+    <div class="date-filter">
+      <input type="date" [(ngModel)]="startDate" class="form-control">
+      <span>-</span>
+      <input type="date" [(ngModel)]="endDate" class="form-control">
+      <button class="btn btn-primary" (click)="loadStats()">
+        <span class="material-icons">filter_alt</span>
+        Lọc
+      </button>
+    </div>
+  </div>
+
+  <div class="stats-grid" *ngIf="stats">
+    <div class="stat-card">
+      <span class="material-icons">payments</span>
+      <div>
+        <div class="stat-value">{{ stats.totalRevenue | vndCurrency }}</div>
+        <div class="stat-label">Tổng doanh thu</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <span class="material-icons">receipt_long</span>
+      <div>
+        <div class="stat-value">{{ stats.totalOrders }}</div>
+        <div class="stat-label">Tổng đơn hàng</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <span class="material-icons">shopping_bag</span>
+      <div>
+        <div class="stat-value">{{ stats.averageOrderValue | vndCurrency }}</div>
+        <div class="stat-label">Giá trị TB / đơn</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <span class="material-icons">verified</span>
+      <div>
+        <div class="stat-value">{{ stats.completedOrders }}</div>
+        <div class="stat-label">Đơn hoàn thành</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="charts-grid" *ngIf="stats">
+    <div class="chart-card chart-card-wide">
+      <div class="chart-title">
+        <h2>Doanh thu và đơn hàng theo ngày</h2>
+        <p>So sánh biến động doanh thu với số lượng đơn hoàn thành.</p>
+      </div>
+      <highcharts-chart
+        [Highcharts]="Highcharts"
+        [options]="revenueChartOptions"
+        [update]="chartUpdateFlag"
+        [oneToOne]="true"
+        class="chart">
+      </highcharts-chart>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">
+        <h2>Cơ cấu trạng thái đơn</h2>
+        <p>Tỷ trọng đơn theo từng trạng thái xử lý.</p>
+      </div>
+      <highcharts-chart
+        [Highcharts]="Highcharts"
+        [options]="statusChartOptions"
+        [update]="chartUpdateFlag"
+        [oneToOne]="true"
+        class="chart compact">
+      </highcharts-chart>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">
+        <h2>So sánh số đơn theo trạng thái</h2>
+        <p>Dễ nhìn nhanh backlog và số đơn đã hoàn tất.</p>
+      </div>
+      <highcharts-chart
+        [Highcharts]="Highcharts"
+        [options]="statusColumnOptions"
+        [update]="chartUpdateFlag"
+        [oneToOne]="true"
+        class="chart compact">
+      </highcharts-chart>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">
+        <h2>Top sản phẩm theo số lượng bán</h2>
+        <p>Xếp hạng các sản phẩm bán chạy nhất.</p>
+      </div>
+      <highcharts-chart
+        [Highcharts]="Highcharts"
+        [options]="topProductsSoldOptions"
+        [update]="chartUpdateFlag"
+        [oneToOne]="true"
+        class="chart compact">
+      </highcharts-chart>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">
+        <h2>So sánh doanh thu top sản phẩm</h2>
+        <p>Doanh thu ước tính theo số lượng đã bán.</p>
+      </div>
+      <highcharts-chart
+        [Highcharts]="Highcharts"
+        [options]="topProductsRevenueOptions"
+        [update]="chartUpdateFlag"
+        [oneToOne]="true"
+        class="chart compact">
+      </highcharts-chart>
+    </div>
+  </div>
+
+  <div class="empty-state" *ngIf="!stats">
+    <span class="material-icons">query_stats</span>
+    <h3>Chưa có dữ liệu thống kê</h3>
+    <p>Chọn khoảng thời gian và tải lại báo cáo.</p>
+  </div>
+</div>

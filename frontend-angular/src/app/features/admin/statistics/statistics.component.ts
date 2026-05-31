@@ -5,154 +5,15 @@ import { RevenueStats } from '../../../core/models';
 
 @Component({
   selector: 'app-statistics',
-  template: `
-    <div class="statistics-page">
-      <div class="page-header">
-        <h1>Thống kê doanh thu</h1>
-        <div class="date-filter">
-          <input type="date" [(ngModel)]="startDate" class="form-control">
-          <span>-</span>
-          <input type="date" [(ngModel)]="endDate" class="form-control">
-          <button class="btn btn-primary" (click)="loadStats()">
-            <span class="material-icons">filter_alt</span>
-            Lọc
-          </button>
-        </div>
-      </div>
-
-      <div class="stats-grid" *ngIf="stats">
-        <div class="stat-card">
-          <span class="material-icons">payments</span>
-          <div>
-            <div class="stat-value">{{ stats.totalRevenue | vndCurrency }}</div>
-            <div class="stat-label">Tổng doanh thu</div>
-          </div>
-        </div>
-        <div class="stat-card">
-          <span class="material-icons">receipt_long</span>
-          <div>
-            <div class="stat-value">{{ stats.totalOrders }}</div>
-            <div class="stat-label">Tổng đơn hàng</div>
-          </div>
-        </div>
-        <div class="stat-card">
-          <span class="material-icons">shopping_bag</span>
-          <div>
-            <div class="stat-value">{{ stats.averageOrderValue | vndCurrency }}</div>
-            <div class="stat-label">Giá trị TB / đơn</div>
-          </div>
-        </div>
-        <div class="stat-card">
-          <span class="material-icons">verified</span>
-          <div>
-            <div class="stat-value">{{ stats.completedOrders }}</div>
-            <div class="stat-label">Đơn hoàn thành</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="charts-grid" *ngIf="stats">
-        <div class="chart-card chart-card-wide">
-          <div class="chart-title">
-            <h2>Doanh thu và đơn hàng theo ngày</h2>
-            <p>So sánh biến động doanh thu với số lượng đơn hoàn thành.</p>
-          </div>
-          <highcharts-chart
-            [Highcharts]="Highcharts"
-            [options]="revenueChartOptions"
-            class="chart">
-          </highcharts-chart>
-        </div>
-
-        <div class="chart-card">
-          <div class="chart-title">
-            <h2>Cơ cấu trạng thái đơn</h2>
-            <p>Tỷ trọng đơn theo từng trạng thái xử lý.</p>
-          </div>
-          <highcharts-chart
-            [Highcharts]="Highcharts"
-            [options]="statusChartOptions"
-            class="chart compact">
-          </highcharts-chart>
-        </div>
-
-        <div class="chart-card">
-          <div class="chart-title">
-            <h2>So sánh số đơn theo trạng thái</h2>
-            <p>Dễ nhìn nhanh backlog và số đơn đã hoàn tất.</p>
-          </div>
-          <highcharts-chart
-            [Highcharts]="Highcharts"
-            [options]="statusColumnOptions"
-            class="chart compact">
-          </highcharts-chart>
-        </div>
-
-        <div class="chart-card">
-          <div class="chart-title">
-            <h2>Top sản phẩm theo số lượng bán</h2>
-            <p>Xếp hạng các sản phẩm bán chạy nhất.</p>
-          </div>
-          <highcharts-chart
-            [Highcharts]="Highcharts"
-            [options]="topProductsSoldOptions"
-            class="chart compact">
-          </highcharts-chart>
-        </div>
-
-        <div class="chart-card">
-          <div class="chart-title">
-            <h2>So sánh doanh thu top sản phẩm</h2>
-            <p>Doanh thu ước tính theo số lượng đã bán.</p>
-          </div>
-          <highcharts-chart
-            [Highcharts]="Highcharts"
-            [options]="topProductsRevenueOptions"
-            class="chart compact">
-          </highcharts-chart>
-        </div>
-      </div>
-
-      <div class="empty-state" *ngIf="!stats">
-        <span class="material-icons">query_stats</span>
-        <h3>Chưa có dữ liệu thống kê</h3>
-        <p>Chọn khoảng thời gian và tải lại báo cáo.</p>
-      </div>
-    </div>
-  `,
-  styles: [`
-    .statistics-page { max-width: 1440px; }
-    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; h1 { font-size: 24px; } }
-    .date-filter { display: flex; align-items: center; gap: 12px; background: white; border: 1px solid #e6e8ec; border-radius: 10px; padding: 12px; box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04); }
-    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-bottom: 24px; @media (max-width: 1100px) { grid-template-columns: repeat(2, 1fr); } @media (max-width: 620px) { grid-template-columns: 1fr; } }
-    .stat-card { background: white; border: 1px solid #e6e8ec; border-radius: 10px; padding: 20px; box-shadow: 0 12px 32px rgba(15, 23, 42, 0.06); display: flex; align-items: center; gap: 16px; }
-    .stat-card > .material-icons { width: 46px; height: 46px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; color: white; background: var(--primary-color); font-size: 24px; flex-shrink: 0; }
-    .stat-value { font-size: 24px; font-weight: 800; color: #182230; margin-bottom: 4px; line-height: 1.2; }
-    .stat-label { font-size: 13px; color: var(--text-secondary); font-weight: 600; }
-    .charts-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
-    .chart-card { background: white; border: 1px solid #e6e8ec; border-radius: 10px; padding: 20px; box-shadow: 0 12px 32px rgba(15, 23, 42, 0.06); min-width: 0; }
-    .chart-card-wide { grid-column: 1 / -1; }
-    .chart-title { margin-bottom: 12px; }
-    .chart-title h2 { font-family: inherit; font-size: 18px; margin: 0 0 4px; color: #182230; }
-    .chart-title p { margin: 0; color: var(--text-secondary); font-size: 13px; }
-    .chart { display: block; width: 100%; height: 380px; }
-    .chart.compact { height: 340px; }
-    .empty-state { background: white; border: 1px solid #e6e8ec; border-radius: 10px; box-shadow: var(--shadow); }
-    @media (max-width: 1024px) {
-      .charts-grid { grid-template-columns: 1fr; }
-    }
-    @media (max-width: 640px) {
-      .date-filter { width: 100%; display: grid; grid-template-columns: 1fr; }
-      .date-filter span { display: none; }
-      .chart, .chart.compact { height: 300px; }
-    }
-  `]
+  templateUrl: './statistics.component.html',
+  styleUrls: ['./statistics.component.scss'],
 })
 export class StatisticsComponent implements OnInit {
   Highcharts: typeof Highcharts = Highcharts;
   stats: RevenueStats | null = null;
   startDate = '';
   endDate = '';
+  chartUpdateFlag = false;
 
   revenueChartOptions: Highcharts.Options = {};
   statusChartOptions: Highcharts.Options = {};
@@ -187,6 +48,10 @@ export class StatisticsComponent implements OnInit {
     this.statusColumnOptions = this.buildStatusColumnChart(stats);
     this.topProductsSoldOptions = this.buildTopProductsSoldChart(stats);
     this.topProductsRevenueOptions = this.buildTopProductsRevenueChart(stats);
+    this.chartUpdateFlag = true;
+    window.setTimeout(() => {
+      this.chartUpdateFlag = false;
+    });
   }
 
   private baseOptions(): Highcharts.Options {

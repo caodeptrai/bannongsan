@@ -1,0 +1,73 @@
+<header class="header">
+  <div class="header-top">
+    <div class="container">
+      <div class="header-top-content">
+        <span class="welcome-text">Chào mừng đến với {{ settings?.siteName || 'WebBanHoaQua' }}!</span>
+        <div class="header-top-links">
+          <span><span class="material-icons">phone</span> {{ settings?.contactPhone || '0909.123.456' }}</span>
+          <span><span class="material-icons">email</span> {{ settings?.contactEmail || 'contact@webbanhoaqua.com' }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="header-main">
+    <div class="container">
+      <div class="header-main-content">
+        <button class="mobile-menu-btn" (click)="toggleMobileMenu()">
+          <span class="material-icons">{{ mobileMenuOpen ? 'close' : 'menu' }}</span>
+        </button>
+
+        <a routerLink="/" class="logo">
+          <span class="logo-icon material-icons">eco</span>
+          <span class="logo-text">{{ settings?.siteName || 'WebBanHoaQua' }}</span>
+        </a>
+
+        <nav class="main-nav" [class.open]="mobileMenuOpen">
+          <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">Trang chủ</a>
+          <a routerLink="/products" routerLinkActive="active">Sản phẩm</a>
+          <a routerLink="/about" routerLinkActive="active">Giới thiệu</a>
+          <a routerLink="/contact" routerLinkActive="active">Liên hệ</a>
+        </nav>
+
+        <div class="header-actions">
+          <div class="search-box">
+            <input type="text" placeholder="Tìm kiếm sản phẩm..." [(ngModel)]="searchQuery" (keyup.enter)="onSearch()">
+            <button (click)="onSearch()"><span class="material-icons">search</span></button>
+          </div>
+
+          <a routerLink="/cart" class="cart-btn">
+            <span class="material-icons">shopping_cart</span>
+            <span class="cart-count" *ngIf="cartCount > 0">{{ cartCount }}</span>
+          </a>
+
+          <div class="user-menu" *ngIf="currentUser">
+            <button class="user-btn" (click)="toggleUserMenu()">
+              <span class="material-icons">account_circle</span>
+              <span class="user-name">{{ currentUser.fullName }}</span>
+            </button>
+            <div class="user-dropdown" [class.show]="userMenuOpen">
+              <a routerLink="/profile" (click)="closeMenus()">
+                <span class="material-icons">person</span> Hồ sơ
+              </a>
+              <a routerLink="/orders" (click)="closeMenus()">
+                <span class="material-icons">receipt_long</span> Đơn hàng
+              </a>
+              <a routerLink="/admin" *ngIf="currentUser.role === 'ADMIN'" (click)="closeMenus()">
+                <span class="material-icons">admin_panel_settings</span> Quản trị
+              </a>
+              <hr>
+              <a (click)="logout()">
+                <span class="material-icons">logout</span> Đăng xuất
+              </a>
+            </div>
+          </div>
+
+          <a routerLink="/auth/login" class="btn btn-primary btn-sm" *ngIf="!currentUser">
+            Đăng nhập
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>

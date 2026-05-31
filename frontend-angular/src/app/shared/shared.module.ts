@@ -9,6 +9,7 @@ import { HeaderComponent } from './components/header/header.component';
 import { FooterComponent } from './components/footer/footer.component';
 import { ProductCardComponent } from './components/product-card/product-card.component';
 import { ChatbotComponent } from './components/chatbot/chatbot.component';
+import { FeedbackHostComponent } from './components/feedback-host/feedback-host.component';
 
 // Pipes
 import { VndCurrencyPipe } from './pipes/vnd-currency.pipe';
@@ -19,6 +20,7 @@ import { VndCurrencyPipe } from './pipes/vnd-currency.pipe';
     FooterComponent,
     ProductCardComponent,
     ChatbotComponent,
+    FeedbackHostComponent,
     VndCurrencyPipe,
   ],
   imports: [
@@ -37,6 +39,7 @@ import { VndCurrencyPipe } from './pipes/vnd-currency.pipe';
     FooterComponent,
     ProductCardComponent,
     ChatbotComponent,
+    FeedbackHostComponent,
     VndCurrencyPipe,
   ]
 })

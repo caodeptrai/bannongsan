@@ -1,0 +1,125 @@
+<div class="orders-page">
+  <div class="page-header"><h1>Quản lý Đơn hàng</h1></div>
+
+  <div class="toolbar">
+    <div class="search-box">
+      <input type="text" [(ngModel)]="searchQuery" (keyup.enter)="applyFilters()" placeholder="Tìm mã đơn, tên khách...">
+      <button (click)="applyFilters()"><span class="material-icons">search</span></button>
+    </div>
+    <select [(ngModel)]="filterStatus" (change)="applyFilters()" class="form-control">
+      <option value="">Tất cả trạng thái</option>
+      <option value="PENDING">Chờ xác nhận</option>
+      <option value="CONFIRMED">Đã xác nhận</option>
+      <option value="SHIPPING">Đang giao</option>
+      <option value="COMPLETED">Hoàn thành</option>
+      <option value="CANCELLED">Đã hủy</option>
+    </select>
+  </div>
+
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Mã đơn</th>
+          <th>Khách hàng</th>
+          <th>Sản phẩm</th>
+          <th>Tổng tiền</th>
+          <th>Trạng thái</th>
+          <th>Ngày đặt</th>
+          <th>Thao tác</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let order of orders">
+          <td><strong>{{ order.orderNumber }}</strong></td>
+          <td>
+            <div>{{ order.shippingName }}</div>
+            <small class="text-secondary">{{ order.shippingPhone }}</small>
+          </td>
+          <td>{{ order._count?.items || 0 }} sản phẩm</td>
+          <td class="price">{{ order.total | vndCurrency }}</td>
+          <td><span class="badge" [ngClass]="getStatusClass(order.status)">{{ getStatusText(order.status) }}</span></td>
+          <td>{{ order.createdAt | date:'dd/MM/yyyy' }}</td>
+          <td>
+            <button class="action-btn" (click)="viewOrder(order)" title="Xem"><span class="material-icons">visibility</span></button>
+            <button class="action-btn" (click)="updateStatus(order)" title="Cập nhật trạng thái"><span class="material-icons">edit</span></button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="pagination" *ngIf="totalPages > 1">
+    <button *ngFor="let p of pages" [class.active]="p === currentPage" (click)="goToPage(p)">{{ p }}</button>
+  </div>
+
+  <!-- Order Detail Modal -->
+  <div class="modal-backdrop" *ngIf="showDetailModal" (click)="closeDetailModal()">
+    <div class="modal large" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Chi tiết đơn hàng #{{ selectedOrder?.orderNumber }}</h2>
+        <button class="close-btn" (click)="closeDetailModal()"><span class="material-icons">close</span></button>
+      </div>
+      <div class="modal-body" *ngIf="selectedOrder">
+        <div class="order-detail-grid">
+          <div class="detail-section">
+            <h3>Thông tin khách hàng</h3>
+            <p><strong>Tên:</strong> {{ selectedOrder.shippingName }}</p>
+            <p><strong>Điện thoại:</strong> {{ selectedOrder.shippingPhone }}</p>
+            <p><strong>Địa chỉ:</strong> {{ selectedOrder.shippingAddress }}</p>
+          </div>
+          <div class="detail-section">
+            <h3>Trạng thái</h3>
+            <span class="badge large" [ngClass]="getStatusClass(selectedOrder.status)">{{ getStatusText(selectedOrder.status) }}</span>
+          </div>
+        </div>
+        <div class="detail-section">
+          <h3>Sản phẩm</h3>
+          <div class="order-items">
+            <div class="order-item" *ngFor="let item of selectedOrder.items">
+              <span>{{ item.productName }} x{{ item.quantity }}</span>
+              <strong>{{ item.total | vndCurrency }}</strong>
+            </div>
+          </div>
+          <div class="order-total">
+            <span>Tổng cộng:</span>
+            <strong>{{ selectedOrder.total | vndCurrency }}</strong>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" (click)="closeDetailModal()">Đóng</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Update Status Modal -->
+  <div class="modal-backdrop" *ngIf="showStatusModal" (click)="closeStatusModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Cập nhật trạng thái</h2>
+        <button class="close-btn" (click)="closeStatusModal()"><span class="material-icons">close</span></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Trạng thái mới</label>
+          <select [(ngModel)]="newStatus" class="form-control">
+            <option value="PENDING">Chờ xác nhận</option>
+            <option value="CONFIRMED">Đã xác nhận</option>
+            <option value="SHIPPING">Đang giao</option>
+            <option value="COMPLETED">Hoàn thành</option>
+            <option value="CANCELLED">Hủy đơn</option>
+          </select>
+        </div>
+        <div class="form-group" *ngIf="newStatus === 'CANCELLED'">
+          <label>Lý do hủy</label>
+          <textarea [(ngModel)]="cancelReason" class="form-control" rows="3"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" (click)="closeStatusModal()">Hủy</button>
+        <button class="btn btn-primary" (click)="saveStatus()">Lưu</button>
+      </div>
+    </div>
+  </div>
+</div>

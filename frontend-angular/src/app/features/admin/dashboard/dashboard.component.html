@@ -1,0 +1,86 @@
+<div class="dashboard">
+  <h1 class="page-title">Tổng Quan Dashboard</h1>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon blue">
+        <span class="material-icons">people</span>
+      </div>
+      <div class="stat-info">
+        <span class="stat-value">{{ stats?.totalUsers || 0 }}</span>
+        <span class="stat-label">Người dùng</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon green">
+        <span class="material-icons">inventory_2</span>
+      </div>
+      <div class="stat-info">
+        <span class="stat-value">{{ stats?.totalProducts || 0 }}</span>
+        <span class="stat-label">Sản phẩm</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon orange">
+        <span class="material-icons">receipt_long</span>
+      </div>
+      <div class="stat-info">
+        <span class="stat-value">{{ stats?.totalOrders || 0 }}</span>
+        <span class="stat-label">Đơn hàng</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon purple">
+        <span class="material-icons">attach_money</span>
+      </div>
+      <div class="stat-info">
+        <span class="stat-value">{{ stats?.totalRevenue | vndCurrency }}</span>
+        <span class="stat-label">Doanh thu</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="dashboard-grid">
+    <div class="dashboard-card recent-orders">
+      <h2>Đơn hàng gần đây</h2>
+      <div class="orders-list">
+        <div class="order-item" *ngFor="let order of stats?.recentOrders">
+          <div class="order-info">
+            <span class="order-number">{{ order.orderNumber }}</span>
+            <span class="order-customer">{{ order.user?.fullName }}</span>
+          </div>
+          <div class="order-meta">
+            <span class="order-total">{{ order.total | vndCurrency }}</span>
+            <span class="order-status" [ngClass]="'status-' + order.status.toLowerCase()">{{ order.status }}</span>
+          </div>
+        </div>
+        <div class="empty" *ngIf="!stats?.recentOrders?.length">
+          Chưa có đơn hàng nào
+        </div>
+      </div>
+      <a routerLink="/admin/orders" class="view-all">Xem tất cả</a>
+    </div>
+
+    <div class="dashboard-card quick-actions">
+      <h2>Thao tác nhanh</h2>
+      <div class="actions-list">
+        <a routerLink="/admin/products" class="action-item">
+          <span class="material-icons">add_box</span>
+          <span>Thêm sản phẩm</span>
+        </a>
+        <a routerLink="/admin/categories" class="action-item">
+          <span class="material-icons">category</span>
+          <span>Quản lý danh mục</span>
+        </a>
+        <a routerLink="/admin/orders" class="action-item">
+          <span class="material-icons">pending_actions</span>
+          <span>Xử lý đơn hàng</span>
+        </a>
+        <a routerLink="/admin/statistics" class="action-item">
+          <span class="material-icons">bar_chart</span>
+          <span>Xem thống kê</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>

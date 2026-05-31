@@ -63,11 +63,12 @@ export class OrderService {
   }
 
   getRevenueStats(startDate?: string, endDate?: string): Observable<{ success: boolean; data: RevenueStats }> {
-    let params = '';
-    if (startDate) params += `startDate=${startDate}&`;
-    if (endDate) params += `endDate=${endDate}&`;
+    let params = new HttpParams();
+    if (startDate) params = params.set('startDate', startDate);
+    if (endDate) params = params.set('endDate', endDate);
     return this.http.get<{ success: boolean; data: RevenueStats }>(
-      `${API_URL}/orders/admin/statistics/revenue?${params}`
+      `${API_URL}/orders/admin/statistics/revenue`,
+      { params }
     );
   }
 }

@@ -388,7 +388,7 @@ export class OrderService {
       completedOrders,
       cancelledOrders,
       ordersInPeriod,
-      topProducts,
+      orderItemsInPeriod,
     ] = await Promise.all([
       prisma.order.count({ where: Object.keys(dateFilter).length ? { createdAt: dateFilter } : {} }),
       prisma.order.count({ where: { ...Object.keys(dateFilter).length ? { createdAt: dateFilter } : {}, status: OrderStatus.PENDING } }),
@@ -404,15 +404,18 @@ export class OrderService {
           status: true,
         },
       }),
-      prisma.product.findMany({
-        where: { soldCount: { gt: 0 } },
-        orderBy: { soldCount: 'desc' },
-        take: 10,
+      prisma.orderItem.findMany({
+        where: {
+          order: {
+            status: OrderStatus.COMPLETED,
+            ...(Object.keys(dateFilter).length ? { createdAt: dateFilter } : {}),
+          },
+        },
         select: {
-          id: true,
-          name: true,
-          soldCount: true,
-          price: true,
+          productId: true,
+          productName: true,
+          quantity: true,
+          total: true,
         },
       }),
     ]);
@@ -437,12 +440,24 @@ export class OrderService {
       .sort((a, b) => a.date.localeCompare(b.date));
 
     // Top products with revenue
-    const topProductsWithRevenue = topProducts.map((p) => ({
-      id: p.id,
-      name: p.name,
-      soldCount: p.soldCount,
-      revenue: p.soldCount * Number(p.price),
-    }));
+    const topProductMap = new Map<string, { id: string; name: string; soldCount: number; revenue: number }>();
+    for (const item of orderItemsInPeriod) {
+      const existing = topProductMap.get(item.productId);
+      if (existing) {
+        existing.soldCount += item.quantity;
+        existing.revenue += Number(item.total);
+      } else {
+        topProductMap.set(item.productId, {
+          id: item.productId,
+          name: item.productName,
+          soldCount: item.quantity,
+          revenue: Number(item.total),
+        });
+      }
+    }
+    const topProductsWithRevenue = Array.from(topProductMap.values())
+      .sort((a, b) => b.soldCount - a.soldCount)
+      .slice(0, 10);
 
     return {
       totalOrders,
