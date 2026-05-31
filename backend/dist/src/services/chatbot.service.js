@@ -156,7 +156,7 @@ ${JSON.stringify(context, null, 2)}`;
     async updateFAQ(id, data) {
         const faq = await prisma.chatbotFAQ.findUnique({ where: { id } });
         if (!faq) {
-            throw { status: 404, message: 'Không tìm thấy FAQ' };
+            throw { status: 404, message: 'Khong tim thay FAQ' };
         }
         return prisma.chatbotFAQ.update({
             where: { id },
@@ -166,7 +166,7 @@ ${JSON.stringify(context, null, 2)}`;
     async deleteFAQ(id) {
         const faq = await prisma.chatbotFAQ.findUnique({ where: { id } });
         if (!faq) {
-            throw { status: 404, message: 'Không tìm thấy FAQ' };
+            throw { status: 404, message: 'Khong tim thay FAQ' };
         }
         return prisma.chatbotFAQ.delete({ where: { id } });
     }
