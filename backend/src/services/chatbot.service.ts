@@ -4,19 +4,33 @@ import { paginate } from '../utils/helpers';
 
 const prisma = new PrismaClient();
 
-type ChatbotResponse = {
-  response: string;
-  category: string;
-  productId?: string | null;
-  confidence: 'high' | 'medium' | 'low';
-  source?: 'openrouter';
+type OpenRouterMessage = {
+  role: 'system' | 'user';
+  content: string;
 };
 
-type OpenRouterChatResponse = {
-  choices?: Array<{
-    message?: {
-      content?: string;
-    };
+type WebsiteProduct = {
+  name: string;
+  price: string;
+  originalPrice: string | null;
+  unit: string;
+  stock: number;
+  category: string;
+  description: string | null;
+  isFeatured: boolean;
+  soldCount: number;
+  rating: string;
+  reviewCount: number;
+};
+
+type WebsiteContext = {
+  siteInfo: string[];
+  categories: string[];
+  products: WebsiteProduct[];
+  faqs: Array<{
+    question: string;
+    answer: string;
+    category: string | null;
   }>;
 };
 
@@ -28,25 +42,144 @@ export class ChatbotService {
     });
   }
 
-  async getResponse(userMessage: string): Promise<ChatbotResponse> {
-    const normalizedMessage = userMessage.trim();
-    if (!normalizedMessage) {
-      throw { status: 400, message: 'Message is required' };
-    }
-
-    if (!config.openRouter.apiKey) {
-      throw { status: 503, message: 'OPENROUTER_API_KEY is not configured' };
-    }
-
-    const websiteContext = await this.buildWebsiteContext();
-    const response = await this.askOpenRouter(normalizedMessage, websiteContext);
+  async getResponse(userMessage: string) {
+    const context = await this.buildWebsiteContext();
+    const response = await this.askOpenRouter(userMessage, context);
 
     return {
       response,
       category: 'openrouter',
-      confidence: 'high',
-      source: 'openrouter',
+      confidence: 'ai',
     };
+  }
+
+  private async buildWebsiteContext(): Promise<WebsiteContext> {
+    const [categories, products, faqs] = await Promise.all([
+      prisma.category.findMany({
+        where: { isActive: true },
+        orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+        include: { _count: { select: { products: true } } },
+      }),
+      prisma.product.findMany({
+        where: { isActive: true },
+        orderBy: [{ isFeatured: 'desc' }, { soldCount: 'desc' }, { createdAt: 'desc' }],
+        include: {
+          category: { select: { name: true } },
+          _count: { select: { reviews: true } },
+        },
+      }),
+      prisma.chatbotFAQ.findMany({
+        where: { isActive: true },
+        orderBy: [{ priority: 'desc' }, { createdAt: 'desc' }],
+      }),
+    ]);
+
+    return {
+      siteInfo: [
+        'Tên website: WebBanHoaQua - website bán nông sản, hoa quả và thực phẩm tươi trực tuyến.',
+        'Sứ mệnh: Mang thiên nhiên đến từng gia đình.',
+        'Cam kết: nông sản tươi, chất lượng cao, nguồn gốc rõ ràng và được kiểm tra chất lượng nghiêm ngặt.',
+        'Địa chỉ: 123 Đường Nông Sản, Quận 1, TP.HCM.',
+        'Hotline: 0909.123.456.',
+        'Email: contact@webbanhoaqua.com.',
+        'Giờ làm việc: 7:00 - 21:00 tất cả các ngày trong tuần.',
+        'Giao hàng: 2-4 giờ trong nội thành TP.HCM.',
+        'Đổi trả: trong 24 giờ nếu sản phẩm không đạt chất lượng.',
+        'Thanh toán: hỗ trợ COD, chuyển khoản ngân hàng, MoMo và ZaloPay.',
+        'Khách hàng có thể xem sản phẩm, lọc theo danh mục/giá, thêm vào giỏ hàng, đặt hàng và theo dõi trạng thái đơn hàng trên website.',
+      ],
+      categories: categories.map((category) => {
+        const description = category.description ? ` - ${category.description}` : '';
+        return `${category.name} (${category._count.products} sản phẩm)${description}`;
+      }),
+      products: products.map((product) => ({
+        name: product.name,
+        price: product.price.toString(),
+        originalPrice: product.originalPrice?.toString() || null,
+        unit: product.unit,
+        stock: product.stock,
+        category: product.category.name,
+        description: product.description,
+        isFeatured: product.isFeatured,
+        soldCount: product.soldCount,
+        rating: product.rating.toString(),
+        reviewCount: product.reviewCount || product._count.reviews,
+      })),
+      faqs: faqs.map((faq) => ({
+        question: faq.question,
+        answer: faq.answer,
+        category: faq.category,
+      })),
+    };
+  }
+
+  private async askOpenRouter(userMessage: string, context: WebsiteContext): Promise<string> {
+    if (!config.openrouter.apiKey) {
+      throw {
+        status: 503,
+        message: 'Chatbot chưa được cấu hình OPENROUTER_API_KEY trên server.',
+      };
+    }
+
+    const messages: OpenRouterMessage[] = [
+      {
+        role: 'system',
+        content: this.buildSystemPrompt(context),
+      },
+      {
+        role: 'user',
+        content: userMessage,
+      },
+    ];
+
+    const response = await fetch(`${config.openrouter.baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${config.openrouter.apiKey}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': config.openrouter.siteUrl,
+        'X-Title': config.openrouter.siteName,
+      },
+      body: JSON.stringify({
+        model: config.openrouter.model,
+        messages,
+        temperature: 0.2,
+        max_tokens: config.openrouter.maxTokens,
+      }),
+    });
+
+    const data: any = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      throw {
+        status: response.status,
+        message: data?.error?.message || 'OpenRouter không thể xử lý yêu cầu chatbot.',
+      };
+    }
+
+    const answer = data?.choices?.[0]?.message?.content?.trim();
+    if (!answer) {
+      throw {
+        status: 502,
+        message: 'OpenRouter trả về phản hồi rỗng.',
+      };
+    }
+
+    return answer;
+  }
+
+  private buildSystemPrompt(context: WebsiteContext): string {
+    return `Bạn là chatbot tư vấn chính thức của WebBanHoaQua. Luôn trả lời bằng tiếng Việt, thân thiện, ngắn gọn nhưng đủ ý.
+
+Yêu cầu bắt buộc:
+- Chỉ dùng thông tin trong phần DỮ LIỆU WEBSITE bên dưới để trả lời về website, sản phẩm, giá, tồn kho, chính sách, liên hệ và cách mua hàng.
+- Nếu người dùng hỏi sản phẩm còn hàng hay giá bao nhiêu, hãy dựa vào danh sách sản phẩm hiện có.
+- Nếu câu hỏi nằm ngoài dữ liệu website, hãy nói bạn chưa có thông tin đó và gợi ý liên hệ hotline 0909.123.456.
+- Không bịa giá, tồn kho, chính sách hoặc thông tin không có trong dữ liệu.
+- Khi phù hợp, hướng dẫn khách xem sản phẩm, thêm vào giỏ hàng, đăng nhập/đăng ký, đặt hàng hoặc liên hệ cửa hàng.
+
+DỮ LIỆU WEBSITE:
+${JSON.stringify(context, null, 2)}`;
   }
 
   async createFAQ(data: { question: string; answer: string; keywords?: string; category?: string; productId?: string; priority?: number }) {
@@ -116,171 +249,6 @@ export class ChatbotService {
         totalPages: Math.ceil(total / limit),
       },
     };
-  }
-
-  private async askOpenRouter(userMessage: string, websiteContext: string) {
-    const endpoint = `${config.openRouter.baseUrl.replace(/\/$/, '')}/chat/completions`;
-    const res = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${config.openRouter.apiKey}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': config.openRouter.siteUrl,
-        'X-Title': config.openRouter.appName,
-      },
-      body: JSON.stringify({
-        model: config.openRouter.model,
-        messages: [
-          {
-            role: 'system',
-            content: [
-              'Ban la chatbot tu van cho website WebBanHoaQua.',
-              'Chi tra loi dua tren WEBSITE_CONTEXT duoc cung cap.',
-              'Neu context khong co thong tin, hay noi hien website chua co thong tin do va huong dan khach lien he hotline 0901 234 567.',
-              'Khong tu bia gia, ton kho, khuyen mai, chinh sach, dia chi, email hoac thoi gian giao hang.',
-              'Tra loi bang tieng Viet, ngan gon, than thien va uu tien thong tin san pham, gia, ton kho, giao hang, thanh toan, doi tra.',
-            ].join(' '),
-          },
-          {
-            role: 'system',
-            content: `WEBSITE_CONTEXT:\n${websiteContext}`,
-          },
-          {
-            role: 'user',
-            content: userMessage,
-          },
-        ],
-        temperature: 0.2,
-        max_tokens: 700,
-      }),
-    });
-
-    if (!res.ok) {
-      const errorText = await res.text();
-      throw {
-        status: 502,
-        message: `OpenRouter request failed (${res.status}): ${this.truncate(errorText, 500)}`,
-      };
-    }
-
-    const data = (await res.json()) as OpenRouterChatResponse;
-    const content = data.choices?.[0]?.message?.content?.trim();
-    if (!content) {
-      throw { status: 502, message: 'OpenRouter returned an empty response' };
-    }
-
-    return content;
-  }
-
-  private async buildWebsiteContext() {
-    const [categories, products, faqs] = await Promise.all([
-      prisma.category.findMany({
-        where: { isActive: true },
-        orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
-        select: {
-          id: true,
-          name: true,
-          slug: true,
-          description: true,
-          parentId: true,
-        },
-      }),
-      prisma.product.findMany({
-        where: { isActive: true },
-        orderBy: [{ isFeatured: 'desc' }, { soldCount: 'desc' }, { name: 'asc' }],
-        include: {
-          category: { select: { name: true, slug: true } },
-          images: {
-            where: { isPrimary: true },
-            take: 1,
-            select: { url: true, altText: true },
-          },
-        },
-      }),
-      prisma.chatbotFAQ.findMany({
-        where: { isActive: true },
-        orderBy: [{ priority: 'desc' }, { createdAt: 'desc' }],
-        select: {
-          question: true,
-          answer: true,
-          keywords: true,
-          category: true,
-          productId: true,
-        },
-      }),
-    ]);
-
-    const categoryLines = categories.map((category) => {
-      const parent = category.parentId ? `, parentId: ${category.parentId}` : '';
-      const description = category.description ? `, mo ta: ${category.description}` : '';
-      return `- ${category.name} (id: ${category.id}, slug: ${category.slug || 'none'}${parent}${description})`;
-    });
-
-    const productLines = products.map((product) => {
-      const image = product.images[0]?.url ? `, anh: ${product.images[0].url}` : '';
-      const originalPrice = product.originalPrice ? `, gia goc: ${this.formatMoney(product.originalPrice)} VND` : '';
-      const description = product.description ? `, mo ta: ${product.description}` : '';
-      return [
-        `- ${product.name}`,
-        `id: ${product.id}`,
-        `slug: ${product.slug}`,
-        `danh muc: ${product.category.name}`,
-        `gia: ${this.formatMoney(product.price)} VND/${product.unit}`,
-        `ton kho: ${product.stock} ${product.unit}`,
-        `SKU: ${product.sku || 'none'}`,
-        `noi bat: ${product.isFeatured ? 'co' : 'khong'}`,
-        `da ban: ${product.soldCount}`,
-        `danh gia: ${this.formatDecimal(product.rating)}/5 (${product.reviewCount} luot)${originalPrice}${image}${description}`,
-      ].join(', ');
-    });
-
-    const faqLines = faqs.map((faq) => {
-      const product = faq.productId ? `, productId: ${faq.productId}` : '';
-      const keywords = faq.keywords ? `, tu khoa: ${faq.keywords}` : '';
-      return `- Q: ${faq.question}\n  A: ${faq.answer} (nhom: ${faq.category || 'general'}${product}${keywords})`;
-    });
-
-    return [
-      'THONG TIN CUA HANG:',
-      '- Ten website/cua hang: WebBanHoaQua.',
-      '- Linh vuc: ban nong san, trai cay va thuc pham tuoi truc tuyen.',
-      '- Hotline/Zalo: 0901 234 567.',
-      '- Email: contact@webbanhoaqua.com.',
-      '- Dia chi: 123 Duong ABC, Quan 1, TP.HCM.',
-      '- Gio mo cua: 7:00-21:00, thu 2 den chu nhat, ke ca ngay le.',
-      '',
-      'CHINH SACH MUA HANG:',
-      '- Dat hang tren website bang cach chon san pham, them vao gio va dat hang.',
-      '- Ho tro thanh toan COD, chuyen khoan ngan hang, MoMo va ZaloPay neu duoc cau hinh trong website.',
-      '- Phi giao hang: don tu 500.000d mien phi; don tu 200.000d den duoi 500.000d phi 15.000d; don duoi 200.000d phi 25.000d.',
-      '- Noi thanh TP.HCM giao trong 24h; cac tinh khac 2-5 ngay tuy khoang cach.',
-      '- Doi tra/hoan tien khi san pham hu hong do van chuyen hoac khong dung mo ta; khach can gui hinh anh va lien he hotline trong 24h.',
-      '',
-      `DANH MUC DANG HIEN THI (${categories.length}):`,
-      categoryLines.join('\n') || '- Chua co danh muc dang hoat dong.',
-      '',
-      `SAN PHAM DANG BAN (${products.length}):`,
-      productLines.join('\n') || '- Chua co san pham dang ban.',
-      '',
-      `FAQ DANG BAT (${faqs.length}):`,
-      faqLines.join('\n') || '- Chua co FAQ dang bat.',
-    ].join('\n');
-  }
-
-  private formatMoney(value: unknown) {
-    return this.formatDecimal(value);
-  }
-
-  private formatDecimal(value: unknown) {
-    if (typeof value === 'object' && value && 'toString' in value) {
-      return value.toString();
-    }
-    return String(value);
-  }
-
-  private truncate(value: string, maxLength: number) {
-    if (value.length <= maxLength) return value;
-    return `${value.slice(0, maxLength)}...`;
   }
 }
 

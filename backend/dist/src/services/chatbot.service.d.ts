@@ -1,10 +1,3 @@
-type ChatbotResponse = {
-    response: string;
-    category: string;
-    productId?: string | null;
-    confidence: 'high' | 'medium' | 'low';
-    source?: 'openrouter';
-};
 export declare class ChatbotService {
     getAllFAQs(): Promise<{
         id: string;
@@ -18,7 +11,14 @@ export declare class ChatbotService {
         keywords: string | null;
         priority: number;
     }[]>;
-    getResponse(userMessage: string): Promise<ChatbotResponse>;
+    getResponse(userMessage: string): Promise<{
+        response: string;
+        category: string;
+        confidence: string;
+    }>;
+    private buildWebsiteContext;
+    private askOpenRouter;
+    private buildSystemPrompt;
     createFAQ(data: {
         question: string;
         answer: string;
@@ -92,12 +92,6 @@ export declare class ChatbotService {
             totalPages: number;
         };
     }>;
-    private askOpenRouter;
-    private buildWebsiteContext;
-    private formatMoney;
-    private formatDecimal;
-    private truncate;
 }
 export declare const chatbotService: ChatbotService;
-export {};
 //# sourceMappingURL=chatbot.service.d.ts.map
