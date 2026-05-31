@@ -33,7 +33,7 @@
 - [x] Quản lý giỏ hàng (thêm, sửa, xóa)
 - [x] Đặt hàng trực tuyến với thanh toán COD
 - [x] Xem lịch sử và trạng thái đơn hàng
-- [x] Chatbot tư vấn sản phẩm 24/7
+- [x] Chatbot tư vấn sản phẩm 24/7 sử dụng OpenRouter và dữ liệu hiện có trên website
 
 ### 3.2 Phía Quản trị viên
 - [x] Dashboard tổng quan với thống kê
@@ -107,8 +107,10 @@ cd backend
 # Cài đặt dependencies
 npm install
 
-# Cấu hình database trong .env
+# Cấu hình database và OpenRouter trong .env
 # DATABASE_URL="mysql://root:@localhost:3306/webbanhoaqua"
+# OPENROUTER_API_KEY="your_openrouter_api_key"
+# OPENROUTER_MODEL="openai/gpt-4o-mini"
 
 # Generate Prisma Client
 npm run prisma:generate
@@ -122,6 +124,8 @@ npm run prisma:seed
 # Chạy development server
 npm run dev
 ```
+
+> Chatbot gọi OpenRouter qua endpoint `/api/v1/chat/completions`. Hãy cấu hình `OPENROUTER_API_KEY` trước khi chạy backend để chatbot có thể trả lời dựa trên toàn bộ dữ liệu website như sản phẩm, danh mục, FAQ, chính sách giao hàng/đổi trả và thông tin liên hệ.
 
 Backend sẽ chạy tại: `http://localhost:5000`
 

@@ -15,7 +15,7 @@ class ChatbotController {
             res.json({ success: true, data: result });
         }
         catch (error) {
-            res.status(500).json({ success: false, message: error.message });
+            res.status(error.status || 500).json({ success: false, message: error.message });
         }
     }
     async getAllFAQs(req, res) {
