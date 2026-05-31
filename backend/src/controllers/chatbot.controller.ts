@@ -14,7 +14,7 @@ export class ChatbotController {
       const result = await chatbotService.getResponse(message);
       res.json({ success: true, data: result });
     } catch (error: any) {
-      res.status(500).json({ success: false, message: error.message });
+      res.status(error.status || 500).json({ success: false, message: error.message });
     }
   }
 

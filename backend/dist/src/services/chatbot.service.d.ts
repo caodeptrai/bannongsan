@@ -13,15 +13,12 @@ export declare class ChatbotService {
     }[]>;
     getResponse(userMessage: string): Promise<{
         response: string;
-        category: string | null;
-        productId: string | null;
-        confidence: string;
-    } | {
-        response: string;
         category: string;
         confidence: string;
-        productId?: undefined;
     }>;
+    private buildWebsiteContext;
+    private askOpenRouter;
+    private buildSystemPrompt;
     createFAQ(data: {
         question: string;
         answer: string;

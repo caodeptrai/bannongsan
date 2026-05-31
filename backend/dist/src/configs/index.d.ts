@@ -12,5 +12,13 @@ export declare const config: {
         dir: string;
         maxSize: number;
     };
+    openrouter: {
+        apiKey: string;
+        baseUrl: string;
+        model: string;
+        maxTokens: number;
+        siteUrl: string;
+        siteName: string;
+    };
 };
 //# sourceMappingURL=index.d.ts.map

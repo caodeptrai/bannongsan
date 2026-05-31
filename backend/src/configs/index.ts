@@ -15,4 +15,12 @@ export const config = {
     dir: process.env.UPLOAD_DIR || 'uploads',
     maxSize: 5 * 1024 * 1024, // 5MB
   },
+  openrouter: {
+    apiKey: process.env.OPENROUTER_API_KEY || '',
+    baseUrl: process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1',
+    model: process.env.OPENROUTER_MODEL || 'openai/gpt-4o-mini',
+    maxTokens: parseInt(process.env.OPENROUTER_MAX_TOKENS || '700', 10),
+    siteUrl: process.env.OPENROUTER_SITE_URL || 'http://localhost:4200',
+    siteName: process.env.OPENROUTER_SITE_NAME || 'WebBanHoaQua',
+  },
 };
