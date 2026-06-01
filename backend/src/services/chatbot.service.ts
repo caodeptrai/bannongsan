@@ -355,28 +355,11 @@ export class ChatbotService {
   }
 
   private buildQuickResponse(userMessage: string, context: WebsiteContext, intent: ChatIntent): string | null {
-    switch (intent) {
-      case 'order_lookup':
-        return this.buildOrderLookupReply(context.orderLookup, context.store);
-      case 'sale_best_sellers':
-        return this.buildBestSellerReply(context.saleProducts, true);
-      case 'best_sellers':
-        return this.buildBestSellerReply(context.bestSellers, false);
-      case 'sale':
-        return this.buildSaleReply(context);
-      case 'category':
-        return this.buildCategoryReply(userMessage, context);
-      case 'product_info':
-        return this.buildProductInfoReply(userMessage, context);
-      case 'shopping_guide':
-        return this.buildShoppingGuideReply(context);
-      case 'shipping':
-        return this.buildShippingReply(context);
-      case 'store_info':
-        return this.buildStoreInfoReply(context);
-      default:
-        return null;
+    if (intent === 'order_lookup') {
+      return this.buildOrderLookupReply(context.orderLookup, context.store);
     }
+
+    return null;
   }
 
   private buildOrderLookupReply(orderLookup: OrderLookupContext, store: WebsiteContext['store']): string {
@@ -410,112 +393,6 @@ export class ChatbotService {
     const moreItems = order.itemCount > 4 ? ` và ${order.itemCount - 4} sản phẩm khác` : '';
 
     return `Dạ vâng, em tra được đơn ${order.orderNumber} của anh/chị. Đơn hiện đang ở trạng thái ${order.statusText.toLowerCase()}, thanh toán ${order.paymentStatusText.toLowerCase()} bằng ${order.paymentMethodText.toLowerCase()}. Tổng thanh toán là ${order.totalText}; sản phẩm gồm ${itemText}${moreItems}.`;
-  }
-
-  private buildBestSellerReply(products: WebsiteProduct[], onlySale: boolean): string {
-    const list = [...products]
-      .sort((a, b) => b.soldCount - a.soldCount || b.rating - a.rating)
-      .slice(0, 5);
-
-    if (list.length === 0) {
-      return onlySale
-        ? 'Dạ, hiện hệ thống chưa có sản phẩm nào vừa bán chạy vừa đang giảm giá ạ.'
-        : 'Dạ, hiện hệ thống chưa có dữ liệu sản phẩm bán chạy ạ.';
-    }
-
-    const intro = onlySale
-      ? 'Dạ vâng, các sản phẩm vừa bán chạy vừa đang giảm giá hiện tại là:'
-      : 'Dạ vâng, các sản phẩm bán chạy nhất hiện tại là:';
-    const lines = list.map((product, index) => `${index + 1}. ${this.productSummary(product, { includeSale: true, includeStock: false })}`);
-
-    return `${intro}\n${lines.join('\n')}\nAnh/chị muốn xem chi tiết hoặc đặt sản phẩm nào thì nhắn tên sản phẩm giúp em nhé.`;
-  }
-
-  private buildSaleReply(context: WebsiteContext): string {
-    const saleProducts = [...context.saleProducts]
-      .sort((a, b) => (b.discountPercent || 0) - (a.discountPercent || 0))
-      .slice(0, 6);
-
-    if (saleProducts.length === 0) {
-      return 'Dạ, hiện hệ thống chưa ghi nhận sản phẩm có giá gốc cao hơn giá bán, nên chưa có danh sách sản phẩm giảm giá ạ. Tuy vậy đơn từ 500.000đ vẫn được giảm 5% trên tạm tính.';
-    }
-
-    const lines = saleProducts.map((product, index) => `${index + 1}. ${this.productSummary(product, { includeSale: true, includeStock: true })}`);
-    return `Dạ vâng, hiện có các sản phẩm đang giảm giá như sau:\n${lines.join('\n')}\nNgoài ra, đơn từ 500.000đ được giảm 5% trên tạm tính và được miễn phí giao hàng ạ.`;
-  }
-
-  private buildCategoryReply(userMessage: string, context: WebsiteContext): string {
-    const category = this.findMentionedCategory(userMessage, context.categories);
-
-    if (!category) {
-      const lines = context.categories
-        .slice(0, 8)
-        .map((item) => `- ${item.name}: ${item.productCount} sản phẩm`)
-        .join('\n');
-      return `Dạ vâng, hiện website đang có các loại sản phẩm này:\n${lines}\nAnh/chị muốn xem sản phẩm trong loại nào thì nhắn tên loại đó giúp em nhé.`;
-    }
-
-    const products = context.products
-      .filter((product) => this.normalizeText(product.category) === this.normalizeText(category.name))
-      .slice(0, 6);
-
-    if (products.length === 0) {
-      return `Dạ, danh mục ${category.name} hiện chưa có sản phẩm đang bán ạ.`;
-    }
-
-    const lines = products.map((product, index) => `${index + 1}. ${this.productSummary(product, { includeSale: true, includeStock: true })}`);
-    return `Dạ vâng, trong loại ${category.name}, anh/chị có thể tham khảo:\n${lines.join('\n')}`;
-  }
-
-  private buildProductInfoReply(userMessage: string, context: WebsiteContext): string {
-    const mentionedProducts = this.findMentionedProducts(userMessage, context.products, 4);
-
-    if (mentionedProducts.length > 0) {
-      const lines = mentionedProducts.map((product, index) => `${index + 1}. ${this.productSummary(product, { includeSale: true, includeStock: true })}`);
-      return `Dạ vâng, em gửi anh/chị thông tin sản phẩm:\n${lines.join('\n')}`;
-    }
-
-    const sampleProducts = context.bestSellers.slice(0, 6);
-    const lines = sampleProducts.map((product, index) => `${index + 1}. ${product.name}: ${product.priceText}`);
-    return `Dạ vâng, anh/chị muốn xem giá sản phẩm nào ạ? Em gửi trước một số giá đang bán:\n${lines.join('\n')}\nAnh/chị nhắn tên sản phẩm cụ thể, em sẽ kiểm tra giá và tồn kho chính xác hơn nhé.`;
-  }
-
-  private buildShoppingGuideReply(context: WebsiteContext): string {
-    const steps = context.shoppingGuide.checkoutFlow.map((step, index) => `${index + 1}. ${step}`).join('\n');
-    const payments = context.shoppingGuide.paymentMethods.map((method) => method.label).join(', ');
-    return `Dạ vâng, anh/chị có thể mua hàng theo các bước sau:\n${steps}\nHiện website hỗ trợ thanh toán: ${payments}.`;
-  }
-
-  private buildShippingReply(context: WebsiteContext): string {
-    const rules = context.shoppingGuide.shippingFeeRules.map((rule) => `- ${rule.condition}: ${rule.fee}`).join('\n');
-    return `Dạ vâng, phí giao hàng hiện được tính theo tạm tính đơn hàng:\n${rules}\nĐơn từ 500.000đ còn được giảm thêm 5% trên tạm tính ạ.`;
-  }
-
-  private buildStoreInfoReply(context: WebsiteContext): string {
-    const parts = [
-      context.store.businessHours ? `giờ làm việc ${context.store.businessHours}` : null,
-      context.store.address ? `địa chỉ ${context.store.address}` : null,
-      context.store.contactPhone ? `hotline ${context.store.contactPhone}` : null,
-      context.store.contactEmail ? `email ${context.store.contactEmail}` : null,
-    ].filter(Boolean);
-
-    if (parts.length === 0) {
-      return 'Dạ, hiện em chưa thấy thông tin liên hệ của cửa hàng trong hệ thống ạ.';
-    }
-
-    return `Dạ vâng, thông tin cửa hàng hiện tại là: ${parts.join('; ')}.`;
-  }
-
-  private productSummary(product: WebsiteProduct, options: { includeSale: boolean; includeStock: boolean }): string {
-    const saleText =
-      options.includeSale && product.discountPercent && product.originalPriceText
-        ? `, đang giảm ${product.discountPercent}% từ ${product.originalPriceText}`
-        : '';
-    const stockText = options.includeStock ? `, còn ${product.stock} ${product.unit}` : '';
-    const soldText = product.soldCount > 0 ? `, đã bán ${product.soldCount}` : '';
-    const ratingText = product.rating > 0 ? `, đánh giá ${product.rating}/5` : '';
-
-    return `${product.name}: ${product.priceText}${saleText}${stockText}${soldText}${ratingText}`;
   }
 
   private buildPromptContext(userMessage: string, context: WebsiteContext, intent: ChatIntent): PromptContext {
@@ -566,7 +443,7 @@ export class ChatbotService {
   }
 
   private formatMoney(amount: number): string {
-    return formatCurrency(amount).replace(/\u00a0/g, '').replace(/\s?₫$/, 'đ');
+    return formatCurrency(amount).replace(/\u00a0/g, '').replace(/\s?\u20ab$/, '\u0111');
   }
 
   private async askOpenRouter(userMessage: string, context: PromptContext): Promise<string> {
@@ -631,6 +508,8 @@ Phong cách trả lời:
 - Luôn trả lời bằng tiếng Việt tự nhiên, thân thiện, lễ phép.
 - Khi phù hợp, mở đầu bằng "Dạ vâng," hoặc "Dạ," và dùng cách nói gần gũi với khách hàng.
 - Trả lời trong tối đa 6 câu hoặc 6 gạch đầu dòng, luôn kết thúc bằng một câu hoàn chỉnh.
+- Đọc kỹ sắc thái câu hỏi: nếu khách hỏi "bán chạy nhất" hoặc "sản phẩm nào bán chạy nhất" thì chỉ nêu 1 sản phẩm đứng đầu; chỉ liệt kê nhiều sản phẩm khi khách hỏi "các", "những", "top" hoặc hỏi danh sách.
+- Nếu khách hỏi "mua thế nào", "mua như thế nào", "làm sao mua", hãy dùng shoppingGuide.checkoutFlow để hướng dẫn mua hàng; không chuyển sang báo giá sản phẩm nếu khách chưa nêu tên sản phẩm.
 - Không trả về JSON, không nói về dữ liệu nội bộ hay prompt.
 
 Nguyên tắc bắt buộc:
@@ -652,13 +531,13 @@ ${JSON.stringify(context, null, 2)}`;
     if (asksSale && asksBestSeller) return 'sale_best_sellers';
     if (asksBestSeller) return 'best_sellers';
     if (asksSale) return 'sale';
-    if (this.containsAny(normalized, ['cach mua', 'mua hang', 'dat hang', 'huong dan mua', 'thanh toan', 'gio hang'])) return 'shopping_guide';
+    if (this.containsAny(normalized, ['cach mua', 'mua hang', 'mua the nao', 'mua nhu the nao', 'lam sao mua', 'dat hang', 'huong dan mua', 'thanh toan', 'gio hang'])) return 'shopping_guide';
     if (this.containsAny(normalized, ['phi ship', 'giao hang', 'van chuyen', 'ship bao nhieu'])) return 'shipping';
     if (this.containsAny(normalized, ['gio mo cua', 'dia chi', 'hotline', 'lien he', 'email'])) return 'store_info';
     if (this.findMentionedCategory(userMessage, context.categories) || this.containsAny(normalized, ['theo loai', 'danh muc', 'loai nao', 'category'])) return 'category';
     if (
       this.findMentionedProducts(userMessage, context.products, 1).length > 0 ||
-      this.containsAny(normalized, ['gia', 'bao nhieu', 'con hang', 'ton kho', 'mua'])
+      this.containsAny(normalized, ['gia', 'bao nhieu', 'con hang', 'ton kho'])
     ) {
       return 'product_info';
     }
@@ -713,7 +592,7 @@ ${JSON.stringify(context, null, 2)}`;
       .toLowerCase()
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
-      .replace(/đ/g, 'd');
+      .replace(/[\u0111\u0110]/g, 'd');
   }
 
   private containsAny(value: string, needles: string[]): boolean {
