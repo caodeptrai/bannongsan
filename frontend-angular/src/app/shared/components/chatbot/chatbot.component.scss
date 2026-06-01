@@ -87,7 +87,10 @@
 
 .chatbot-messages {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
   padding: 16px;
   display: flex;
   flex-direction: column;
@@ -101,6 +104,8 @@
   border-radius: 12px;
   font-size: 14px;
   line-height: 1.5;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
   animation: fadeIn 0.3s ease;
 
   &.bot {
