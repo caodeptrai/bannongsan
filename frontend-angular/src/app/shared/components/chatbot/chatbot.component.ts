@@ -22,11 +22,11 @@ export class ChatbotComponent implements OnInit, AfterViewChecked {
   private shouldScrollToBottom = false;
 
   suggestions = [
-    'Sản phẩm nào bán chạy?',
-    'Còn xoài không?',
-    'Giờ mở cửa?',
+    'Website có những nội dung gì?',
+    'Có khóa học nào không?',
+    'Sản phẩm/khóa học nổi bật?',
     'Có chương trình giảm giá không?',
-    'Cách đặt hàng?',
+    'Cách đặt hàng hoặc đăng ký?',
     'Tra cứu đơn hàng',
   ];
 
