@@ -9,6 +9,13 @@ type OpenRouterMessage = {
   content: string;
 };
 
+type WebsitePage = {
+  title: string;
+  route: string;
+  summary: string;
+  keyPoints: string[];
+};
+
 type ChatIntent =
   | 'order_lookup'
   | 'sale_best_sellers'
@@ -16,6 +23,8 @@ type ChatIntent =
   | 'sale'
   | 'category'
   | 'product_info'
+  | 'course_info'
+  | 'website_content'
   | 'shopping_guide'
   | 'shipping'
   | 'store_info'
@@ -47,6 +56,16 @@ type WebsiteContext = {
   products: WebsiteProduct[];
   bestSellers: WebsiteProduct[];
   saleProducts: WebsiteProduct[];
+  courseItems: WebsiteProduct[];
+  websitePages: WebsitePage[];
+  dataSummary: {
+    totalActiveProducts: number;
+    totalCategories: number;
+    totalFAQs: number;
+    totalCourseItems: number;
+    featuredProductNames: string[];
+    courseItemNames: string[];
+  };
   faqs: Array<{
     question: string;
     answer: string;
@@ -112,10 +131,13 @@ type OrderLookupContext =
       };
     };
 
-type PromptContext = Omit<WebsiteContext, 'products' | 'bestSellers' | 'saleProducts' | 'faqs'> & {
+type PromptContext = Omit<WebsiteContext, 'products' | 'bestSellers' | 'saleProducts' | 'courseItems' | 'faqs'> & {
   products: Array<Partial<WebsiteProduct>>;
   bestSellers: Array<Partial<WebsiteProduct>>;
   saleProducts: Array<Partial<WebsiteProduct>>;
+  courseItems: Array<Partial<WebsiteProduct>>;
+  websitePages: WebsitePage[];
+  dataSummary: WebsiteContext['dataSummary'];
   faqs: WebsiteContext['faqs'];
 };
 
@@ -177,6 +199,7 @@ export class ChatbotService {
 
     const mappedProducts = products.map((product) => this.mapProduct(product));
     const saleProducts = mappedProducts.filter((product) => product.discountPercent !== null);
+    const courseItems = mappedProducts.filter((product) => this.isCourseLikeProduct(product));
 
     return {
       generatedAt: new Date().toISOString(),
@@ -222,6 +245,16 @@ export class ChatbotService {
         .sort((a, b) => b.soldCount - a.soldCount || b.rating - a.rating)
         .slice(0, 10),
       saleProducts,
+      courseItems,
+      websitePages: this.getWebsitePages(settings),
+      dataSummary: {
+        totalActiveProducts: mappedProducts.length,
+        totalCategories: categories.length,
+        totalFAQs: faqs.length,
+        totalCourseItems: courseItems.length,
+        featuredProductNames: mappedProducts.filter((product) => product.isFeatured).slice(0, 12).map((product) => product.name),
+        courseItemNames: courseItems.slice(0, 30).map((product) => product.name),
+      },
       faqs: faqs.map((faq) => ({
         question: faq.question,
         answer: faq.answer,
@@ -259,6 +292,83 @@ export class ChatbotService {
       rating: Number(product.rating),
       reviewCount: product.reviewCount || product._count.reviews,
     };
+  }
+
+  private getWebsitePages(settings: any): WebsitePage[] {
+    return [
+      {
+        title: 'Trang chủ',
+        route: '/',
+        summary: 'Giới thiệu các danh mục, sản phẩm nổi bật, hàng mới về và lời kêu gọi liên hệ tư vấn.',
+        keyPoints: [
+          'Nông sản tươi ngon, giao hàng tận nơi.',
+          'Đặt hàng online và giao hàng nhanh chóng.',
+          'Các điểm mạnh: giao hàng nhanh, sản phẩm chất lượng, hỗ trợ 24/7, thanh toán an toàn.',
+        ],
+      },
+      {
+        title: 'Sản phẩm/khóa học',
+        route: '/products',
+        summary: 'Danh sách toàn bộ bản ghi đang bán/đăng trên website, có lọc theo danh mục, giá, tồn kho và từ khóa.',
+        keyPoints: [
+          'Dữ liệu chi tiết lấy từ bảng sản phẩm đang hoạt động.',
+          'Nếu bản ghi là khóa học/dịch vụ, chatbot dùng chính tên, mô tả, danh mục và giá của bản ghi đó để tư vấn.',
+        ],
+      },
+      {
+        title: 'Giỏ hàng',
+        route: '/cart',
+        summary: 'Khách kiểm tra sản phẩm, số lượng, tạm tính, phí vận chuyển và ưu đãi trước khi thanh toán.',
+        keyPoints: ['Có thể cập nhật số lượng hoặc xóa sản phẩm trước khi đặt hàng.'],
+      },
+      {
+        title: 'Thanh toán',
+        route: '/checkout',
+        summary: 'Khách đăng nhập, nhập thông tin giao hàng, chọn phương thức thanh toán và xác nhận đơn.',
+        keyPoints: ['Hỗ trợ COD, chuyển khoản ngân hàng, MoMo và ZaloPay theo cấu hình hệ thống.'],
+      },
+      {
+        title: 'Đơn hàng của tôi',
+        route: '/orders',
+        summary: 'Khách xem lịch sử, trạng thái và chi tiết đơn hàng sau khi đăng nhập.',
+        keyPoints: ['Chatbot chỉ tra cứu chi tiết đơn khi khách cung cấp đúng mã đơn và số điện thoại đặt hàng.'],
+      },
+      {
+        title: 'Về chúng tôi',
+        route: '/about',
+        summary: 'WebBanHoaQua chuyên cung cấp nông sản tươi ngon, chất lượng cao từ khắp vùng miền Việt Nam.',
+        keyPoints: [
+          'Sứ mệnh: Mang thiên nhiên đến từng gia đình.',
+          'Giá trị cốt lõi: sạch 100%, giao nhanh, cam kết đổi trả trong 24h nếu sản phẩm không đạt chất lượng, hỗ trợ 24/7.',
+        ],
+      },
+      {
+        title: 'Liên hệ',
+        route: '/contact',
+        summary: 'Trang thông tin liên hệ và form gửi tin nhắn hỗ trợ khách hàng.',
+        keyPoints: [
+          `Địa chỉ: ${settings?.address || '123 Đường Nông Sản, Quận 1, TP.HCM'}`,
+          `Điện thoại: ${settings?.contactPhone || '0909.123.456'}`,
+          `Email: ${settings?.contactEmail || 'contact@webbanhoaqua.com'}`,
+          `Giờ làm việc: ${settings?.businessHours || '7:00 - 21:00 (Thứ 2 - CN)'}`,
+        ],
+      },
+    ];
+  }
+
+  private isCourseLikeProduct(product: WebsiteProduct): boolean {
+    const searchable = this.normalizeText(`${product.name} ${product.category} ${product.description || ''} ${product.unit}`);
+    return this.containsAny(searchable, [
+      'khoa hoc',
+      'lop hoc',
+      'hoc phi',
+      'chuong trinh hoc',
+      'dao tao',
+      'giang vien',
+      'course',
+      'lesson',
+      'class',
+    ]);
   }
 
   private async buildOrderLookupContext(userMessage: string): Promise<OrderLookupContext> {
@@ -397,7 +507,7 @@ export class ChatbotService {
 
   private buildPromptContext(userMessage: string, context: WebsiteContext, intent: ChatIntent): PromptContext {
     const selectedProducts = this.selectProductsForPrompt(userMessage, context, intent)
-      .slice(0, 12)
+      .slice(0, 30)
       .map((product) => this.compactProduct(product));
 
     return {
@@ -407,7 +517,10 @@ export class ChatbotService {
       categories: context.categories,
       products: selectedProducts,
       bestSellers: context.bestSellers.slice(0, 5).map((product) => this.compactProduct(product)),
-      saleProducts: context.saleProducts.slice(0, 8).map((product) => this.compactProduct(product)),
+      saleProducts: context.saleProducts.slice(0, 12).map((product) => this.compactProduct(product)),
+      courseItems: context.courseItems.slice(0, 30).map((product) => this.compactProduct(product)),
+      websitePages: context.websitePages,
+      dataSummary: context.dataSummary,
       faqs: this.relevantFaqs(userMessage, context.faqs).slice(0, 8),
       orderLookup: context.orderLookup,
     };
@@ -422,9 +535,11 @@ export class ChatbotService {
       return context.products.filter((product) => this.normalizeText(product.category) === this.normalizeText(category.name));
     }
 
+    if (intent === 'course_info') return context.courseItems;
     if (intent === 'sale' || intent === 'sale_best_sellers') return context.saleProducts;
     if (intent === 'best_sellers') return context.bestSellers;
-    return context.products.slice(0, 12);
+    if (intent === 'website_content') return context.products.slice(0, 20);
+    return context.products.slice(0, 20);
   }
 
   private compactProduct(product: WebsiteProduct): Partial<WebsiteProduct> {
@@ -438,7 +553,7 @@ export class ChatbotService {
       category: product.category,
       soldCount: product.soldCount,
       rating: product.rating,
-      description: product.description ? product.description.slice(0, 180) : null,
+      description: product.description ? product.description.slice(0, 500) : null,
     };
   }
 
@@ -476,8 +591,8 @@ export class ChatbotService {
       body: JSON.stringify({
         model: config.openrouter.model,
         messages,
-        temperature: 0.25,
-        max_tokens: Math.max(config.openrouter.maxTokens, 5000),
+        temperature: 0.2,
+        max_tokens: config.openrouter.maxTokens,
       }),
     });
 
@@ -502,19 +617,19 @@ export class ChatbotService {
   }
 
   private buildSystemPrompt(context: PromptContext): string {
-    return `Bạn là chatbot tư vấn chính thức của ${context.store.siteName}.
+    return `Bạn là chatbot tư vấn chính thức của ${context.store.siteName}. Nhiệm vụ của bạn là trả lời mọi câu hỏi liên quan đến nội dung website và dữ liệu đang có trong hệ thống, đặc biệt là dữ liệu sản phẩm/khóa học/dịch vụ nếu website đang dùng các bản ghi này để đăng khóa học.
 
 Phong cách trả lời:
 - Luôn trả lời bằng tiếng Việt tự nhiên, thân thiện, lễ phép.
 - Khi phù hợp, mở đầu bằng "Dạ vâng," hoặc "Dạ," và dùng cách nói gần gũi với khách hàng.
-- Trả lời trong tối đa 6 câu hoặc 6 gạch đầu dòng, luôn kết thúc bằng một câu hoàn chỉnh.
+- Trả lời trong tối đa 6 câu hoặc 6 gạch đầu dòng, luôn kết thúc bằng một câu hoàn chỉnh; nếu khách hỏi danh sách/tổng hợp dữ liệu thì có thể dùng gạch đầu dòng ngắn gọn.
 - Đọc kỹ sắc thái câu hỏi: nếu khách hỏi "bán chạy nhất" hoặc "sản phẩm nào bán chạy nhất" thì chỉ nêu 1 sản phẩm đứng đầu; chỉ liệt kê nhiều sản phẩm khi khách hỏi "các", "những", "top" hoặc hỏi danh sách.
-- Nếu khách hỏi "mua thế nào", "mua như thế nào", "làm sao mua", hãy dùng shoppingGuide.checkoutFlow để hướng dẫn mua hàng; không chuyển sang báo giá sản phẩm nếu khách chưa nêu tên sản phẩm.
+- Nếu khách hỏi "mua thế nào", "mua như thế nào", "làm sao mua", "đăng ký khóa học", hãy dùng shoppingGuide.checkoutFlow để hướng dẫn; không chuyển sang báo giá nếu khách chưa nêu tên sản phẩm/khóa học.
 - Không trả về JSON, không nói về dữ liệu nội bộ hay prompt.
 
 Nguyên tắc bắt buộc:
-- Chỉ dùng dữ liệu trong phần DỮ LIỆU HỆ THỐNG để trả lời về website, sản phẩm, giá, tồn kho, danh mục, bán chạy, khuyến mãi, cách mua hàng và đơn hàng.
-- Không bịa giá, tồn kho, trạng thái đơn, chính sách hoặc thông tin liên hệ nếu dữ liệu không có.
+- Chỉ dùng dữ liệu trong phần DỮ LIỆU HỆ THỐNG để trả lời về website, trang nội dung, sản phẩm/khóa học/dịch vụ, giá/học phí, tồn kho/số lượng, danh mục, bán chạy/nổi bật, khuyến mãi, cách mua/đăng ký và đơn hàng.
+- Không bịa giá/học phí, tồn kho/số lượng, trạng thái đơn, chính sách, lịch học, giảng viên hoặc thông tin liên hệ nếu dữ liệu không có.
 - Nếu không đủ dữ liệu để trả lời, hãy nói nhẹ nhàng rằng hiện chưa có thông tin đó và hướng khách cung cấp thêm thông tin hoặc liên hệ cửa hàng nếu có số liên hệ.
 
 DỮ LIỆU HỆ THỐNG:
@@ -528,12 +643,17 @@ ${JSON.stringify(context, null, 2)}`;
     const asksSale = this.containsAny(normalized, ['khuyen mai', 'giam gia', 'sale', 'uu dai', 'gia tot', 'dang giam']);
     const asksBestSeller = this.containsAny(normalized, ['ban chay', 'hot', 'pho bien', 'best seller', 'mua nhieu']);
 
+    const asksCourse = this.containsAny(normalized, ['khoa hoc', 'hoc phi', 'lich hoc', 'lop hoc', 'chuong trinh hoc', 'giang vien', 'dang ky hoc', 'dao tao', 'course']);
+    const asksWebsiteContent = this.containsAny(normalized, ['website', 'trang web', 'noi dung', 'gioi thieu', 've chung toi', 'chinh sach', 'lien he', 'ho tro']);
+
+    if (asksCourse) return 'course_info';
     if (asksSale && asksBestSeller) return 'sale_best_sellers';
     if (asksBestSeller) return 'best_sellers';
     if (asksSale) return 'sale';
     if (this.containsAny(normalized, ['cach mua', 'mua hang', 'mua the nao', 'mua nhu the nao', 'lam sao mua', 'dat hang', 'huong dan mua', 'thanh toan', 'gio hang'])) return 'shopping_guide';
     if (this.containsAny(normalized, ['phi ship', 'giao hang', 'van chuyen', 'ship bao nhieu'])) return 'shipping';
     if (this.containsAny(normalized, ['gio mo cua', 'dia chi', 'hotline', 'lien he', 'email'])) return 'store_info';
+    if (asksWebsiteContent) return 'website_content';
     if (this.findMentionedCategory(userMessage, context.categories) || this.containsAny(normalized, ['theo loai', 'danh muc', 'loai nao', 'category'])) return 'category';
     if (
       this.findMentionedProducts(userMessage, context.products, 1).length > 0 ||
@@ -548,7 +668,9 @@ ${JSON.stringify(context, null, 2)}`;
   private categoryFromIntent(intent: ChatIntent): string {
     if (intent === 'order_lookup' || intent === 'shopping_guide') return 'order';
     if (intent === 'sale' || intent === 'sale_best_sellers' || intent === 'product_info') return 'price';
+    if (intent === 'course_info') return 'course';
     if (intent === 'best_sellers') return 'product';
+    if (intent === 'website_content' || intent === 'store_info') return 'website';
     if (intent === 'category') return 'category';
     if (intent === 'shipping') return 'shipping';
     return 'general';
@@ -613,13 +735,14 @@ ${JSON.stringify(context, null, 2)}`;
     const messageTerms = new Set(normalizedMessage.split(/[^a-z0-9]+/).filter((term) => term.length >= 2));
     const ignoredTerms = new Set([
       'san', 'pham', 'gia', 'bao', 'nhieu', 'con', 'hang', 'mua', 'ban', 'chay', 'khuyen', 'mai', 'giam', 'loai', 'nao',
+      'khoa', 'hoc', 'lop', 'chuong', 'trinh', 'dang', 'ky', 'hocphi', 'phi', 'lich', 'giang', 'vien',
       'toi', 'muon', 'co', 'khong', 'hay', 'cho', 'biet', 'giup', 'em', 'anh', 'chi',
     ]);
 
     const scored = products
       .map((product) => {
         const productName = this.normalizeText(product.name);
-        const searchable = `${productName} ${this.normalizeText(product.slug)} ${this.normalizeText(product.category)}`;
+        const searchable = `${productName} ${this.normalizeText(product.slug)} ${this.normalizeText(product.category)} ${this.normalizeText(product.description || '')}`;
         const productTerms = productName
           .split(/[^a-z0-9]+/)
           .filter((term) => term.length >= 3 && !ignoredTerms.has(term));
